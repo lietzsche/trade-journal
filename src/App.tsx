@@ -805,12 +805,13 @@ export default function App() {
             <div className="p-2 bg-gradient-to-br from-indigo-500 to-indigo-700 rounded-xl shadow-md">
               <Coins className="w-5 h-5 text-white" />
             </div>
-            <span className="font-extrabold text-xl tracking-tight bg-gradient-to-r from-indigo-600 via-indigo-500 to-amber-500 dark:from-indigo-300 dark:to-amber-300 bg-clip-text text-transparent">
-              ANTIGRAVITY STOP
+            <span className="font-extrabold text-sm sm:text-xl tracking-tight bg-gradient-to-r from-indigo-600 via-indigo-500 to-amber-500 dark:from-indigo-300 dark:to-amber-300 bg-clip-text text-transparent">
+              <span className="inline sm:hidden">FINFOLIO</span>
+              <span className="hidden sm:inline">ANTIGRAVITY STOP</span>
             </span>
           </div>
 
-          <div className="flex items-center gap-3 sm:gap-6">
+          <div className="flex items-center gap-1.5 xs:gap-3">
             <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-slate-200/50 dark:bg-slate-900/60 rounded-full border border-slate-300/40 dark:border-slate-800 text-xs text-slate-600 dark:text-slate-300">
               <User className="w-3.5 h-3.5 text-indigo-400" />
               <span>{user.nickname}님 환영합니다</span>
@@ -819,7 +820,7 @@ export default function App() {
             {/* Dark Mode Toggle */}
             <button
               onClick={() => setDarkMode(!darkMode)}
-              className="p-2.5 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors shadow-sm"
+              className="p-2 xs:p-2.5 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors shadow-sm cursor-pointer"
               title="테마 토글"
             >
               {darkMode ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-indigo-500" />}
@@ -829,7 +830,7 @@ export default function App() {
             <button
               onClick={loadAllData}
               disabled={loading}
-              className="p-2.5 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors shadow-sm disabled:opacity-50"
+              className="p-2 xs:p-2.5 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors shadow-sm disabled:opacity-50 cursor-pointer"
               title="새로고침"
             >
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
@@ -838,7 +839,7 @@ export default function App() {
             {/* Logout Button */}
             <button
               onClick={handleLogout}
-              className="p-2.5 bg-rose-500/10 dark:bg-rose-500/10 hover:bg-rose-500/20 dark:hover:bg-rose-500/20 rounded-xl border border-rose-500/20 text-rose-600 dark:text-rose-400 transition-colors shadow-sm flex items-center gap-2 text-xs font-bold"
+              className="p-2 xs:p-2.5 bg-rose-500/10 dark:bg-rose-500/10 hover:bg-rose-500/20 dark:hover:bg-rose-500/20 rounded-xl border border-rose-500/20 text-rose-600 dark:text-rose-400 transition-colors shadow-sm flex items-center gap-2 text-xs font-bold cursor-pointer"
             >
               <LogOut className="w-4 h-4" />
               <span className="hidden sm:inline">로그아웃</span>
@@ -1245,7 +1246,8 @@ export default function App() {
                 </div>
               </div>
 
-              <div className="overflow-x-auto">
+              {/* Desktop table view (Visible on desktop, hidden on mobile) */}
+              <div className="hidden md:block overflow-x-auto">
                 <table className="w-full text-left border-collapse text-xs whitespace-nowrap">
                   <thead>
                     <tr className="bg-slate-100/50 dark:bg-slate-900/40 text-slate-500 border-b border-slate-200 dark:border-slate-800/80 font-bold">
@@ -1337,7 +1339,7 @@ export default function App() {
                             <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
                               item.level > 0
                                 ? 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20'
-                                : 'bg-slate-200/60 dark:bg-slate-800 text-slate-500 dark:text-slate-400'
+                               : 'bg-slate-200/60 dark:bg-slate-800 text-slate-500 dark:text-slate-400'
                             }`}>
                               Lv.{item.level}
                             </span>
@@ -1372,6 +1374,122 @@ export default function App() {
                     )}
                   </tbody>
                 </table>
+              </div>
+
+              {/* Mobile stacked list view (Visible on mobile, hidden on desktop, no horizontal scroll) */}
+              <div className="block md:hidden divide-y divide-slate-200 dark:divide-slate-800/80">
+                {portfolio.length > 0 ? (
+                  portfolio.map((item) => (
+                    <div key={item.id} className="p-5 space-y-4 hover:bg-slate-100/30 dark:hover:bg-slate-900/10 transition-colors">
+                      {/* Card Header: Ticker, P&L, Level */}
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="text-base font-extrabold tracking-wider text-slate-900 dark:text-slate-100">{item.ticker}</span>
+                          <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold ${
+                            item.level > 0
+                              ? 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20'
+                              : 'bg-slate-200/60 dark:bg-slate-800 text-slate-500 dark:text-slate-400'
+                          }`}>
+                            Lv.{item.level}
+                          </span>
+                        </div>
+                        <div className="flex flex-col items-end">
+                          <span className={`font-extrabold text-sm ${
+                            item.unrealizedPnL >= 0 ? 'text-emerald-500' : 'text-rose-500'
+                          }`}>
+                            {item.unrealizedPnL >= 0 ? '+' : ''}{item.pnlPercent.toFixed(2)}%
+                          </span>
+                          <span className={`text-[10px] font-semibold ${item.unrealizedPnL >= 0 ? 'text-emerald-500/80' : 'text-rose-500/80'}`}>
+                            ({item.unrealizedPnL >= 0 ? '+' : ''}{formatCurrency(item.unrealizedPnL, item.currency)})
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Card Details Grid */}
+                      <div className="grid grid-cols-2 gap-x-4 gap-y-2.5 text-xs bg-slate-100/50 dark:bg-slate-900/40 p-3.5 rounded-2xl border border-slate-200/40 dark:border-slate-800/60">
+                        <div>
+                          <div className="text-[10px] text-slate-500 font-bold mb-0.5">보유 수량</div>
+                          <div className="font-bold text-slate-800 dark:text-slate-200">{item.quantity.toLocaleString()}개</div>
+                        </div>
+                        <div>
+                          <div className="text-[10px] text-slate-500 font-bold mb-0.5">매입 평균 단가</div>
+                          <div className="font-mono font-bold text-slate-800 dark:text-slate-200">{formatCurrency(item.buyPrice, item.currency)}</div>
+                        </div>
+                        <div className="border-t border-slate-200/60 dark:border-slate-800/60 pt-2">
+                          <div className="text-[10px] text-slate-500 font-bold mb-0.5">평가 금액</div>
+                          <div className="font-mono font-bold text-slate-800 dark:text-slate-200">{formatCurrency(item.marketValue, item.currency)}</div>
+                        </div>
+                        <div className="border-t border-slate-200/60 dark:border-slate-800/60 pt-2">
+                          <div className="text-[10px] text-indigo-500 font-bold mb-0.5">차기 목표가</div>
+                          <div className="font-mono font-extrabold text-indigo-600 dark:text-indigo-400">{formatCurrency(item.nextTarget, item.currency)}</div>
+                        </div>
+                      </div>
+
+                      {/* Stop Loss Alert and Current Price editable card details */}
+                      <div className="flex items-center justify-between gap-4 pt-1">
+                        <div>
+                          <div className="text-[10px] text-rose-500 font-bold mb-0.5">손절선 (Stop Loss)</div>
+                          <div className="font-mono font-extrabold text-rose-500">
+                            {formatCurrency(item.stopLoss, item.currency)}
+                          </div>
+                          {item.currentPrice <= item.stopLoss && (
+                            <span className="block text-[8px] text-rose-500 font-black uppercase mt-0.5">이탈 (STOP TRIGGERED)</span>
+                          )}
+                        </div>
+
+                        {/* Interactive Current Price editor */}
+                        <div className="flex items-center gap-1.5">
+                          {editingPriceId === item.id ? (
+                            <div className="flex items-center gap-1">
+                              <input
+                                type="number"
+                                value={tempPriceValue}
+                                onChange={(e) => setTempPriceValue(e.target.value)}
+                                className="w-20 bg-white dark:bg-slate-900 border border-indigo-500 rounded-lg px-2 py-1 text-right text-xs focus:outline-none"
+                                autoFocus
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') handleSavePrice(item.id);
+                                  if (e.key === 'Escape') setEditingPriceId(null);
+                                }}
+                              />
+                              <button
+                                onClick={() => handleSavePrice(item.id)}
+                                className="bg-indigo-600 hover:bg-indigo-700 text-white px-2.5 py-1 rounded-lg text-[10px] font-bold"
+                              >
+                                저장
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 py-1.5 px-3 rounded-xl hover:border-indigo-500 transition-colors">
+                              <div className="text-right">
+                                <div className="text-[9px] text-slate-500 font-bold">현재가</div>
+                                <span className="font-mono text-xs font-bold text-slate-800 dark:text-slate-200">{formatCurrency(item.currentPrice, item.currency)}</span>
+                              </div>
+                              <button
+                                onClick={() => handleStartEditing(item)}
+                                className="text-slate-500 hover:text-indigo-500 p-0.5"
+                                title="현재가 수정"
+                              >
+                                <Edit3 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Memo block */}
+                      {item.memo && (
+                        <div className="bg-slate-100/50 dark:bg-slate-900/30 p-2.5 rounded-xl text-[11px] text-slate-500 dark:text-slate-400 font-medium">
+                          Memo: {item.memo}
+                        </div>
+                      )}
+                    </div>
+                  ))
+                ) : (
+                  <div className="py-12 px-6 text-center text-slate-400 text-xs">
+                    보유하고 있는 자산이 없습니다. [매매 일지] 탭에서 매수(BUY) 기록을 등록해 주세요.
+                  </div>
+                )}
               </div>
             </div>
 
@@ -1627,7 +1745,8 @@ export default function App() {
                   <span className="text-slate-400">총 {transactions.length}건</span>
                 </div>
                 
-                <div className="overflow-x-auto">
+                {/* Desktop table view (Visible on desktop, hidden on mobile) */}
+                <div className="hidden md:block overflow-x-auto">
                   <table className="w-full text-left border-collapse text-xs whitespace-nowrap">
                     <thead>
                       <tr className="bg-slate-100/50 dark:bg-slate-900/40 text-slate-500 border-b border-slate-200 dark:border-slate-800/80 font-bold">
@@ -1695,6 +1814,83 @@ export default function App() {
                       )}
                     </tbody>
                   </table>
+                </div>
+
+                {/* Mobile stacked list view (Visible on mobile, hidden on desktop, no horizontal scroll) */}
+                <div className="block md:hidden divide-y divide-slate-200 dark:divide-slate-800/80">
+                  {transactions.length > 0 ? (
+                    transactions.map((tx) => (
+                      <div key={tx.id} className="p-5 space-y-3.5 hover:bg-slate-100/30 dark:hover:bg-slate-900/10 transition-colors">
+                        {/* Card Header: Date, BUY/SELL type */}
+                        <div className="flex items-center justify-between">
+                          <span className="text-[11px] font-bold text-slate-500">{tx.tradeDate}</span>
+                          <span className={`px-2 py-0.5 rounded-md text-[9px] font-extrabold ${
+                            tx.type === 'BUY'
+                              ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
+                              : 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20'
+                          }`}>
+                            {tx.type === 'BUY' ? '매수 BUY' : '매도 SELL'}
+                          </span>
+                        </div>
+
+                        {/* Card Body Details */}
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <div className="text-base font-extrabold tracking-wide text-slate-900 dark:text-slate-100">{tx.ticker}</div>
+                            <div className="text-xs text-slate-400 font-semibold mt-0.5">
+                              {tx.quantity.toLocaleString()}개 × {formatCurrency(tx.price, tx.currency)}
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-[10px] text-slate-500 font-bold mb-0.5">합계 금액</div>
+                            <span className="font-mono text-sm font-extrabold text-slate-800 dark:text-slate-100">
+                              {formatCurrency(tx.price * tx.quantity, tx.currency)}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Fee and Memo */}
+                        <div className="flex flex-wrap items-center justify-between gap-4 text-xs pt-1 border-t border-slate-200/50 dark:border-slate-800/50">
+                          <div className="flex items-center gap-4 text-[11px] text-slate-500">
+                            <div>
+                              <span className="font-bold mr-1">수수료:</span>
+                              <span className="font-mono">{formatCurrency(tx.fee, tx.currency)}</span>
+                            </div>
+                            {tx.memo && (
+                              <div className="max-w-[150px] truncate" title={tx.memo}>
+                                <span className="font-bold mr-1">메모:</span>
+                                <span>{tx.memo}</span>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Action buttons */}
+                          <div className="flex items-center gap-1.5 ml-auto">
+                            <button
+                              onClick={() => startEditTransaction(tx)}
+                              disabled={actionLoading}
+                              className="text-indigo-500 hover:bg-indigo-500/10 p-1.5 rounded-lg border border-slate-200 dark:border-slate-800 hover:border-indigo-500/20 transition-all active:scale-95 disabled:opacity-50 text-[10px] font-bold flex items-center gap-1 cursor-pointer bg-white dark:bg-slate-900"
+                            >
+                              <Edit3 className="w-3.5 h-3.5" />
+                              <span>수정</span>
+                            </button>
+                            <button
+                              onClick={() => handleDeleteTransaction(tx.id)}
+                              disabled={actionLoading}
+                              className="text-rose-500 hover:bg-rose-500/10 p-1.5 rounded-lg border border-slate-200 dark:border-slate-800 hover:border-rose-500/20 transition-all active:scale-95 disabled:opacity-50 text-[10px] font-bold flex items-center gap-1 cursor-pointer bg-white dark:bg-slate-900"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                              <span>삭제</span>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="py-12 px-5 text-center text-slate-400 text-xs">
+                      필터 조건에 부합하는 매매 거래 내역이 존재하지 않습니다.
+                    </div>
+                  )}
                 </div>
               </div>
 
