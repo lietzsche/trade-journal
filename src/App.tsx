@@ -178,7 +178,7 @@ export default function App() {
       handleLogout();
       throw new Error('인증 세션이 만료되었습니다. 다시 로그인 해주세요.');
     }
-    const data = await res.json();
+    const data = await res.json() as any;
     if (!res.ok) {
       throw new Error(data.error || 'API 요청 도중 문제가 발생했습니다.');
     }
@@ -255,7 +255,7 @@ export default function App() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email: authEmail, password: authPassword }),
         });
-        const res = await data.json();
+        const res = await data.json() as any;
         if (!data.ok) throw new Error(res.error || '로그인 실패');
 
         localStorage.setItem('stock_history_token', res.token);
@@ -267,7 +267,7 @@ export default function App() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email: authEmail, password: authPassword, nickname: authNickname }),
         });
-        const res = await data.json();
+        const res = await data.json() as any;
         if (!data.ok) throw new Error(res.error || '회원가입 실패');
 
         setAuthSuccess('회원가입이 완료되었습니다. 로그인 해주세요.');

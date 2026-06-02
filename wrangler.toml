@@ -1,9 +1,16 @@
 name = "stock-history"
-pages_build_output_dir = "dist"
+main = "src/server.ts"
 compatibility_date = "2024-04-03"
+
+[assets]
+directory = "./dist"
+binding = "ASSETS"
+run_worker_first = ["/api/*"]
+not_found_handling = "single-page-application"
 
 [[d1_databases]]
 binding = "DB"
 database_name = "stock-history-db"
 database_id = "a0b1c2d3-e4f5-6a7b-8c9d-0e1f2a3b4c5d" # Placeholder ID for local/production setup
 migrations_dir = "drizzle/migrations"
+

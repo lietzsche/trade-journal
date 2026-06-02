@@ -1,9 +1,9 @@
+/// <reference types="@cloudflare/workers-types" />
 import { Hono } from 'hono';
-import { handle } from 'hono/cloudflare-pages';
 import { sign, verify } from 'hono/jwt';
 import { drizzle } from 'drizzle-orm/d1';
-import * as schema from '../../src/db/schema';
-import { eq, and, asc, desc } from 'drizzle-orm';
+import * as schema from './db/schema';
+import { eq, and, asc, desc, sql } from 'drizzle-orm';
 
 type Bindings = {
   DB: D1Database;
@@ -37,7 +37,7 @@ authApp.use('*', async (c, next) => {
   }
   const token = authHeader.split(' ')[1];
   try {
-    const payload = await verify(token, JWT_SECRET);
+    const payload = await verify(token, JWT_SECRET, 'HS256');
     c.set('userId', payload.id as number);
     c.set('userEmail', payload.email as string);
     await next();
@@ -645,4 +645,4 @@ authApp.get('/dashboard', async (c) => {
 // Mount Authenticated Router
 app.route('/', authApp);
 
-export const onRequest = handle(app);
+export default app;
