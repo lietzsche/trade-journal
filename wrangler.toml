@@ -10,7 +10,7 @@ not_found_handling = "single-page-application"
 
 [[d1_databases]]
 binding = "DB"
-database_name = "stock-history-db"
-database_id = "fa96a638-6d1c-46b8-a639-c9438156b3d3" # Placeholder ID for local/production setup
+database_name = "trade-journal-db"
+database_id = "af07d21d-a248-4147-a487-4a65483e1139" # Placeholder ID for local/production setup
 migrations_dir = "drizzle/migrations"
 
