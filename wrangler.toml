@@ -1,0 +1,9 @@
+name = "stock-history"
+pages_build_output_dir = "dist"
+compatibility_date = "2024-04-03"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "stock-history-db"
+database_id = "a0b1c2d3-e4f5-6a7b-8c9d-0e1f2a3b4c5d" # Placeholder ID for local/production setup
+migrations_dir = "drizzle/migrations"
