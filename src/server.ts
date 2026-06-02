@@ -211,6 +211,8 @@ app.post('/auth/signin', async (c) => {
         id: user.id,
         email: user.email,
         nickname: user.nickname,
+        preferredCurrency: user.preferredCurrency,
+        exchangeRate: user.exchangeRate,
       },
     });
   } catch (err: any) {
@@ -228,7 +230,13 @@ authApp.get('/auth/me', async (c) => {
   const userId = c.get('userId');
   try {
     const [user] = await db
-      .select({ id: schema.users.id, email: schema.users.email, nickname: schema.users.nickname })
+      .select({ 
+        id: schema.users.id, 
+        email: schema.users.email, 
+        nickname: schema.users.nickname,
+        preferredCurrency: schema.users.preferredCurrency,
+        exchangeRate: schema.users.exchangeRate
+      })
       .from(schema.users)
       .where(eq(schema.users.id, userId));
     
@@ -236,6 +244,30 @@ authApp.get('/auth/me', async (c) => {
       return c.json({ error: '사용자를 찾을 수 없습니다.' }, 404);
     }
     return c.json({ success: true, user });
+  } catch (err: any) {
+    return c.json({ error: err.message }, 500);
+  }
+});
+
+// PUT User Settings Update (Manual Exchange Rate & Preferred Currency)
+authApp.put('/user/settings', async (c) => {
+  const db = drizzle(c.env.DB, { schema });
+  const userId = c.get('userId');
+  try {
+    const { preferredCurrency, exchangeRate } = await c.req.json();
+    if (!preferredCurrency || isNaN(Number(exchangeRate))) {
+      return c.json({ error: '올바른 설정을 입력해 주세요.' }, 400);
+    }
+
+    await db
+      .update(schema.users)
+      .set({
+        preferredCurrency,
+        exchangeRate: Number(exchangeRate)
+      })
+      .where(eq(schema.users.id, userId));
+
+    return c.json({ success: true });
   } catch (err: any) {
     return c.json({ error: err.message }, 500);
   }

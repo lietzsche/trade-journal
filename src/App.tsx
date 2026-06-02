@@ -43,6 +43,8 @@ interface UserData {
   id: number;
   email: string;
   nickname: string;
+  preferredCurrency: 'KRW' | 'USD';
+  exchangeRate: number;
 }
 
 interface PortfolioItem {
@@ -221,6 +223,14 @@ export default function App() {
       const data = await fetchWithAuth('/api/auth/me');
       if (data.success && data.user) {
         setUser(data.user);
+        if (data.user.preferredCurrency) {
+          setPreferredCurrency(data.user.preferredCurrency);
+          localStorage.setItem('preferred_currency', data.user.preferredCurrency);
+        }
+        if (data.user.exchangeRate) {
+          setExchangeRate(data.user.exchangeRate);
+          localStorage.setItem('exchange_rate', data.user.exchangeRate.toString());
+        }
       }
     } catch (err) {
       console.error(err);
@@ -298,6 +308,14 @@ export default function App() {
         localStorage.setItem('stock_history_token', res.token);
         setToken(res.token);
         setUser(res.user);
+        if (res.user.preferredCurrency) {
+          setPreferredCurrency(res.user.preferredCurrency);
+          localStorage.setItem('preferred_currency', res.user.preferredCurrency);
+        }
+        if (res.user.exchangeRate) {
+          setExchangeRate(res.user.exchangeRate);
+          localStorage.setItem('exchange_rate', res.user.exchangeRate.toString());
+        }
       } else {
         const data = await fetch('/api/auth/signup', {
           method: 'POST',
@@ -326,6 +344,17 @@ export default function App() {
     setPortfolio([]);
     setTransactions([]);
     setAlerts([]);
+  };
+
+  const saveSettings = async (curr: 'KRW' | 'USD', rate: number) => {
+    try {
+      await fetchWithAuth('/api/user/settings', {
+        method: 'PUT',
+        body: JSON.stringify({ preferredCurrency: curr, exchangeRate: rate }),
+      });
+    } catch (err) {
+      console.error('설정 저장 실패:', err);
+    }
   };
 
   // Transaction Addition
@@ -818,38 +847,44 @@ export default function App() {
         </div>
       </header>
 
-      {/* 2. Secondary Tab Navigation Bar */}
+      {/* 2. Secondary Tab Navigation Bar (iOS-style Segmented Control) */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full mt-6">
-        <div className="flex border-b border-slate-200 dark:border-slate-800 gap-1 overflow-x-auto pb-px">
+        <div className="bg-slate-200/50 dark:bg-slate-900/60 p-1 rounded-2xl flex border border-slate-300/30 dark:border-slate-800/80 w-full relative">
           <button
             onClick={() => setActiveTab('dashboard')}
-            className={`py-3 px-5 text-sm font-semibold border-b-2 transition-all whitespace-nowrap ${
+            className={`flex-1 text-center py-2.5 sm:py-3 text-xs sm:text-sm font-bold rounded-xl transition-all duration-300 relative z-10 cursor-pointer flex items-center justify-center gap-1.5 sm:gap-2 ${
               activeTab === 'dashboard'
-                ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
-                : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm border border-slate-200/50 dark:border-slate-700/50 font-bold'
+                : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 font-semibold'
             }`}
           >
-            📊 대시보드 통계
+            <span>📊</span>
+            <span className="hidden sm:inline">대시보드 통계</span>
+            <span className="sm:hidden">대시보드</span>
           </button>
           <button
             onClick={() => setActiveTab('portfolio')}
-            className={`py-3 px-5 text-sm font-semibold border-b-2 transition-all whitespace-nowrap ${
+            className={`flex-1 text-center py-2.5 sm:py-3 text-xs sm:text-sm font-bold rounded-xl transition-all duration-300 relative z-10 cursor-pointer flex items-center justify-center gap-1.5 sm:gap-2 ${
               activeTab === 'portfolio'
-                ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
-                : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm border border-slate-200/50 dark:border-slate-700/50 font-bold'
+                : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 font-semibold'
             }`}
           >
-            🎯 보유 자산 & 트레일링 스톱
+            <span>🎯</span>
+            <span className="hidden sm:inline">보유 자산 & 트레일링 스톱</span>
+            <span className="sm:hidden">보유자산</span>
           </button>
           <button
             onClick={() => setActiveTab('transactions')}
-            className={`py-3 px-5 text-sm font-semibold border-b-2 transition-all whitespace-nowrap ${
+            className={`flex-1 text-center py-2.5 sm:py-3 text-xs sm:text-sm font-bold rounded-xl transition-all duration-300 relative z-10 cursor-pointer flex items-center justify-center gap-1.5 sm:gap-2 ${
               activeTab === 'transactions'
-                ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
-                : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm border border-slate-200/50 dark:border-slate-700/50 font-bold'
+                : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 font-semibold'
             }`}
           >
-            📝 매매 거래 일지
+            <span>📝</span>
+            <span className="hidden sm:inline">매매 거래 일지</span>
+            <span className="sm:hidden">거래일지</span>
           </button>
         </div>
       </div>
@@ -917,6 +952,7 @@ export default function App() {
                     onClick={() => {
                       setPreferredCurrency('KRW');
                       localStorage.setItem('preferred_currency', 'KRW');
+                      saveSettings('KRW', exchangeRate);
                     }}
                     className={`px-4 py-2 text-xs font-bold rounded-lg transition-all ${
                       preferredCurrency === 'KRW'
@@ -930,6 +966,7 @@ export default function App() {
                     onClick={() => {
                       setPreferredCurrency('USD');
                       localStorage.setItem('preferred_currency', 'USD');
+                      saveSettings('USD', exchangeRate);
                     }}
                     className={`px-4 py-2 text-xs font-bold rounded-lg transition-all ${
                       preferredCurrency === 'USD'
@@ -951,6 +988,7 @@ export default function App() {
                       const val = parseFloat(e.target.value) || 1;
                       setExchangeRate(val);
                       localStorage.setItem('exchange_rate', val.toString());
+                      saveSettings(preferredCurrency, val);
                     }}
                     className="w-20 bg-transparent text-xs font-bold font-mono focus:outline-none border-b border-transparent focus:border-emerald-500 text-right pr-1 dark:text-slate-100"
                     min="1"

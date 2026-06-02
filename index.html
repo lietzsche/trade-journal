@@ -5,6 +5,13 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Antigravity Stop - 트레일링 스톱 자산 관리 & 거래 일지 플랫폼</title>
+    
+    <!-- PWA manifest and mobile app tags -->
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="theme-color" content="#080a15" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
     <!-- Premium Fonts: Outfit and Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -17,6 +24,15 @@
         font-family: 'Outfit', sans-serif;
       }
     </style>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js')
+            .then(reg => console.log('서비스 워커가 등록되었습니다!', reg))
+            .catch(err => console.error('서비스 워커 등록 실패:', err));
+        });
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>

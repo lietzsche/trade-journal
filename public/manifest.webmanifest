@@ -1,0 +1,18 @@
+{
+  "name": "FINFOLIO 트레일링 스톱 자산관리",
+  "short_name": "FINFOLIO",
+  "description": "상승장 수익 극대화, 하락장 리스크 제어를 지원하는 트레일링 스톱 자산 관리 & 거래 일지 플랫폼",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#080a15",
+  "theme_color": "#6366f1",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

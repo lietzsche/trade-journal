@@ -7,6 +7,8 @@ export const users = sqliteTable('users', {
   passwordHash: text('password_hash').notNull(),
   nickname: text('nickname').notNull(),
   role: text('role').default('user').notNull(),
+  preferredCurrency: text('preferred_currency').$type<'KRW' | 'USD'>().default('KRW').notNull(),
+  exchangeRate: real('exchange_rate').default(1350).notNull(),
   createdAt: text('created_at').default(sql`CURRENT_TIMESTAMP`).notNull(),
 });
 
