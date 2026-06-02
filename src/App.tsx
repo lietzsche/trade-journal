@@ -111,6 +111,8 @@ export default function App() {
   );
   const [loading, setLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
+  const [showGuide, setShowGuide] = useState(false);
+  const [showAddForm, setShowAddForm] = useState(false);
 
   // Core Data states
   const [portfolio, setPortfolio] = useState<PortfolioItem[]>([]);
@@ -1199,39 +1201,54 @@ export default function App() {
         {activeTab === 'portfolio' && (
           <div className="space-y-6">
 
-            {/* Strategy guide banner */}
-            <div className="glass-panel rounded-3xl p-6 border border-slate-200 dark:border-slate-800/80 shadow-sm relative overflow-hidden bg-gradient-to-r from-indigo-500/5 via-transparent to-amber-500/5">
-              <h3 className="text-base font-extrabold text-indigo-600 dark:text-indigo-400 flex items-center gap-2 mb-2">
-                ⚠️ 트레일링 스톱(Trailing Stop) 전략 안내 및 공식
-              </h3>
-              <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed mb-4">
-                시장의 등락 속에서 이미 확보된 이익을 안전하게 실현(익절)하고, 최초의 손실을 방지하기 위한 트레일링 스톱 규칙에 따라 백엔드 연산이 다음과 같이 실시간 적용됩니다.
-              </p>
-              
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-xs">
-                <div className="p-4 bg-white/50 dark:bg-slate-900/40 rounded-xl border border-slate-200 dark:border-slate-800/60">
-                  <span className="font-extrabold text-slate-700 dark:text-slate-200">1. 평가 손익률 (P&L%)</span>
-                  <div className="font-mono text-slate-400 mt-1">((현재가 - 평단가) / 평단가) * 100</div>
-                </div>
-                <div className="p-4 bg-white/50 dark:bg-slate-900/40 rounded-xl border border-slate-200 dark:border-slate-800/60">
-                  <span className="font-extrabold text-slate-700 dark:text-slate-200">2. 익스톱 레벨 (Level)</span>
-                  <div className="font-mono text-slate-400 mt-1">10% 상승마다 레벨 1씩 증가 (Lv = Math.floor(손익률/10))</div>
-                </div>
-                <div className="p-4 bg-white/50 dark:bg-slate-900/40 rounded-xl border border-slate-200 dark:border-slate-800/60">
-                  <span className="font-extrabold text-slate-700 dark:text-slate-200">3. 익절/손절가 (Stop Loss)</span>
-                  <div className="font-mono text-slate-400 mt-1">
-                    Lv ≤ 0 : 평단가 대비 -5%<br />
-                    Lv ≥ 1 : 평단가 * (1 + (Lv - 1) * 0.1)
-                  </div>
-                </div>
-                <div className="p-4 bg-white/50 dark:bg-slate-900/40 rounded-xl border border-slate-200 dark:border-slate-800/60">
-                  <span className="font-extrabold text-slate-700 dark:text-slate-200">4. 차기 목표가 (Target)</span>
-                  <div className="font-mono text-slate-400 mt-1">
-                    Lv &lt; 0 : 평단가(본전)<br />
-                    Lv ≥ 0 : 평단가 * (1 + (Lv + 1) * 0.1)
-                  </div>
-                </div>
+            {/* Strategy guide banner (Collapsible, collapsed by default) */}
+            <div className="glass-panel rounded-3xl p-5 border border-slate-200 dark:border-slate-800/80 shadow-sm relative overflow-hidden bg-gradient-to-r from-indigo-500/5 via-transparent to-amber-500/5 transition-all duration-300">
+              <div 
+                onClick={() => setShowGuide(!showGuide)}
+                className="flex items-center justify-between cursor-pointer select-none"
+              >
+                <h3 className="text-xs sm:text-sm font-extrabold text-indigo-600 dark:text-indigo-400 flex items-center gap-2">
+                  <span>⚠️</span>
+                  <span>트레일링 스톱(Trailing Stop) 전략 안내 및 공식</span>
+                </h3>
+                <button className="text-[10px] sm:text-xs font-bold bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 px-3 py-1.5 rounded-xl border border-indigo-500/20 hover:bg-indigo-500/20 transition-all flex items-center gap-1 cursor-pointer">
+                  <span>{showGuide ? '접기' : '자세히 보기'}</span>
+                  <span className={`transform transition-transform duration-300 ${showGuide ? 'rotate-180' : ''}`}>▼</span>
+                </button>
               </div>
+              
+              {showGuide && (
+                <div className="mt-4 pt-4 border-t border-slate-200/60 dark:border-slate-800/60 animate-in fade-in slide-in-from-top-2 duration-300">
+                  <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed mb-4 font-medium">
+                    시장의 등락 속에서 이미 확보된 이익을 안전하게 실현(익절)하고, 최초의 손실을 방지하기 위한 트레일링 스톱 규칙에 따라 백엔드 연산이 다음과 같이 실시간 적용됩니다.
+                  </p>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-xs">
+                    <div className="p-4 bg-white/50 dark:bg-slate-900/40 rounded-xl border border-slate-200 dark:border-slate-800/60">
+                      <span className="font-extrabold text-slate-700 dark:text-slate-200">1. 평가 손익률 (P&L%)</span>
+                      <div className="font-mono text-slate-400 mt-1">((현재가 - 평단가) / 평단가) * 100</div>
+                    </div>
+                    <div className="p-4 bg-white/50 dark:bg-slate-900/40 rounded-xl border border-slate-200 dark:border-slate-800/60">
+                      <span className="font-extrabold text-slate-700 dark:text-slate-200">2. 익스톱 레벨 (Level)</span>
+                      <div className="font-mono text-slate-400 mt-1">10% 상승마다 레벨 1씩 증가 (Lv = Math.floor(손익률/10))</div>
+                    </div>
+                    <div className="p-4 bg-white/50 dark:bg-slate-900/40 rounded-xl border border-slate-200 dark:border-slate-800/60">
+                      <span className="font-extrabold text-slate-700 dark:text-slate-200">3. 익절/손절가 (Stop Loss)</span>
+                      <div className="font-mono text-slate-400 mt-1 leading-relaxed">
+                        Lv ≤ 0 : 평단가 대비 -5%<br />
+                        Lv ≥ 1 : 평단가 * (1 + (Lv - 1) * 0.1)
+                      </div>
+                    </div>
+                    <div className="p-4 bg-white/50 dark:bg-slate-900/40 rounded-xl border border-slate-200 dark:border-slate-800/60">
+                      <span className="font-extrabold text-slate-700 dark:text-slate-200">4. 차기 목표가 (Target)</span>
+                      <div className="font-mono text-slate-400 mt-1 leading-relaxed">
+                        Lv &lt; 0 : 평단가(본전)<br />
+                        Lv ≥ 0 : 평단가 * (1 + (Lv + 1) * 0.1)
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Holdings Table */}
@@ -1502,163 +1519,177 @@ export default function App() {
         {activeTab === 'transactions' && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
             
-            {/* Left Col: Add Transaction Form */}
-            <div className="glass-panel rounded-3xl p-6 shadow-sm border border-slate-200 dark:border-slate-800/80">
-              <h2 className="text-base font-extrabold mb-4 flex items-center gap-2">
-                ✍️ 신규 매매 거래 일지 작성
-              </h2>
+            {/* Left Col: Add Transaction Form (Collapsible, collapsed by default) */}
+            <div className="glass-panel rounded-3xl p-5 shadow-sm border border-slate-200 dark:border-slate-800/80 transition-all duration-300">
+              <div 
+                onClick={() => setShowAddForm(!showAddForm)}
+                className="flex items-center justify-between cursor-pointer select-none"
+              >
+                <h2 className="text-xs sm:text-sm font-extrabold flex items-center gap-2 text-slate-800 dark:text-slate-100">
+                  <span>✍️</span>
+                  <span>신규 매매 거래 일지 작성</span>
+                </h2>
+                <button className="text-[10px] sm:text-xs font-bold bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 px-3 py-1.5 rounded-xl border border-indigo-500/20 hover:bg-indigo-500/20 transition-all flex items-center gap-1 cursor-pointer">
+                  <span>{showAddForm ? '접기' : '작성하기'}</span>
+                  <span className={`transform transition-transform duration-300 ${showAddForm ? 'rotate-180' : ''}`}>▼</span>
+                </button>
+              </div>
 
-              {txError && (
-                <div className="mb-4 p-3 bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs rounded-xl flex items-center gap-2">
-                  <AlertTriangle className="w-4.5 h-4.5 shrink-0" />
-                  <span>{txError}</span>
-                </div>
-              )}
+              {showAddForm && (
+                <div className="mt-4 pt-4 border-t border-slate-200/60 dark:border-slate-800/60 animate-in fade-in slide-in-from-top-2 duration-300">
+                  {txError && (
+                    <div className="mb-4 p-3 bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs rounded-xl flex items-center gap-2">
+                      <AlertTriangle className="w-4.5 h-4.5 shrink-0" />
+                      <span>{txError}</span>
+                    </div>
+                  )}
 
-              {txSuccess && (
-                <div className="mb-4 p-3 bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs rounded-xl flex items-center gap-2">
-                  <CheckCircle className="w-4.5 h-4.5 shrink-0" />
-                  <span>{txSuccess}</span>
-                </div>
-              )}
+                  {txSuccess && (
+                    <div className="mb-4 p-3 bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs rounded-xl flex items-center gap-2">
+                      <CheckCircle className="w-4.5 h-4.5 shrink-0" />
+                      <span>{txSuccess}</span>
+                    </div>
+                  )}
 
-              <form onSubmit={handleAddTransaction} className="space-y-4 text-xs">
-                
-                {/* Ticker and Currency input */}
-                <div className="grid grid-cols-3 gap-2">
-                  <div className="col-span-2">
-                    <label className="block text-xs font-bold text-slate-400 mb-1">종목 티커 *</label>
-                    <input
-                      type="text"
-                      required
-                      value={txTicker}
-                      onChange={(e) => setTxTicker(e.target.value)}
-                      placeholder="AAPL, TSLA, 005930 등"
-                      className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 focus:outline-none focus:border-indigo-500 transition-colors dark:text-slate-100 uppercase"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold text-slate-400 mb-1">거래 통화 *</label>
-                    <select
-                      value={txCurrency}
-                      onChange={(e) => setTxCurrency(e.target.value as 'KRW' | 'USD')}
-                      className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 focus:outline-none focus:border-indigo-500 transition-colors font-bold text-slate-700 dark:text-slate-300"
-                    >
-                      <option value="KRW">₩ KRW</option>
-                      <option value="USD">$ USD</option>
-                    </select>
-                  </div>
-                </div>
+                  <form onSubmit={handleAddTransaction} className="space-y-4 text-xs">
+                    
+                    {/* Ticker and Currency input */}
+                    <div className="grid grid-cols-3 gap-2">
+                      <div className="col-span-2">
+                        <label className="block text-xs font-bold text-slate-400 mb-1">종목 티커 *</label>
+                        <input
+                          type="text"
+                          required
+                          value={txTicker}
+                          onChange={(e) => setTxTicker(e.target.value)}
+                          placeholder="AAPL, TSLA, 005930 등"
+                          className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 focus:outline-none focus:border-indigo-500 transition-colors dark:text-slate-100 uppercase"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-slate-400 mb-1">거래 통화 *</label>
+                        <select
+                          value={txCurrency}
+                          onChange={(e) => setTxCurrency(e.target.value as 'KRW' | 'USD')}
+                          className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 focus:outline-none focus:border-indigo-500 transition-colors font-bold text-slate-700 dark:text-slate-300"
+                        >
+                          <option value="KRW">₩ KRW</option>
+                          <option value="USD">$ USD</option>
+                        </select>
+                      </div>
+                    </div>
 
-                {/* Type Selection (BUY/SELL) */}
-                <div>
-                  <label className="block text-xs font-bold text-slate-400 mb-1.5">거래 구분 *</label>
-                  <div className="grid grid-cols-2 gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setTxType('BUY')}
-                      className={`py-2 px-4 rounded-xl font-bold border transition-all text-center ${
-                        txType === 'BUY'
-                          ? 'bg-emerald-500/10 border-emerald-500 text-emerald-600 dark:text-emerald-400'
-                          : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-500'
-                      }`}
-                    >
-                      매수 (BUY)
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setTxType('SELL')}
-                      className={`py-2 px-4 rounded-xl font-bold border transition-all text-center ${
-                        txType === 'SELL'
-                          ? 'bg-rose-500/10 border-rose-500 text-rose-600 dark:text-rose-400'
-                          : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-500'
-                      }`}
-                    >
-                      매도 (SELL)
-                    </button>
-                  </div>
-                </div>
+                    {/* Type Selection (BUY/SELL) */}
+                    <div>
+                      <label className="block text-xs font-bold text-slate-400 mb-1.5">거래 구분 *</label>
+                      <div className="grid grid-cols-2 gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setTxType('BUY')}
+                          className={`py-2 px-4 rounded-xl font-bold border transition-all text-center cursor-pointer ${
+                            txType === 'BUY'
+                              ? 'bg-emerald-500/10 border-emerald-500 text-emerald-600 dark:text-emerald-400'
+                              : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-500'
+                          }`}
+                        >
+                          매수 (BUY)
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setTxType('SELL')}
+                          className={`py-2 px-4 rounded-xl font-bold border transition-all text-center cursor-pointer ${
+                            txType === 'SELL'
+                              ? 'bg-rose-500/10 border-rose-500 text-rose-600 dark:text-rose-400'
+                              : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-500'
+                          }`}
+                        >
+                          매도 (SELL)
+                        </button>
+                      </div>
+                    </div>
 
-                {/* Price and Quantity rows */}
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-bold text-slate-400 mb-1">체결 단가 (원) *</label>
-                    <input
-                      type="number"
-                      required
-                      min="0.01"
-                      step="any"
-                      value={txPrice}
-                      onChange={(e) => setTxPrice(e.target.value)}
-                      placeholder="150000"
-                      className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 focus:outline-none focus:border-indigo-500 transition-colors"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold text-slate-400 mb-1">체결 수량 (개) *</label>
-                    <input
-                      type="number"
-                      required
-                      min="0.0001"
-                      step="any"
-                      value={txQuantity}
-                      onChange={(e) => setTxQuantity(e.target.value)}
-                      placeholder="10"
-                      className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 focus:outline-none focus:border-indigo-500 transition-colors"
-                    />
-                  </div>
-                </div>
+                    {/* Price and Quantity rows */}
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs font-bold text-slate-400 mb-1">체결 단가 *</label>
+                        <input
+                          type="number"
+                          required
+                          min="0.01"
+                          step="any"
+                          value={txPrice}
+                          onChange={(e) => setTxPrice(e.target.value)}
+                          placeholder="150000"
+                          className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 focus:outline-none focus:border-indigo-500 transition-colors font-semibold"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-slate-400 mb-1">체결 수량 (개) *</label>
+                        <input
+                          type="number"
+                          required
+                          min="0.0001"
+                          step="any"
+                          value={txQuantity}
+                          onChange={(e) => setTxQuantity(e.target.value)}
+                          placeholder="10"
+                          className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 focus:outline-none focus:border-indigo-500 transition-colors font-semibold"
+                        />
+                      </div>
+                    </div>
 
-                {/* Fee and Date rows */}
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-bold text-slate-400 mb-1">거래 수수료 (원)</label>
-                    <input
-                      type="number"
-                      min="0"
-                      step="any"
-                      value={txFee}
-                      onChange={(e) => setTxFee(e.target.value)}
-                      placeholder="0"
-                      className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 focus:outline-none focus:border-indigo-500 transition-colors"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold text-slate-400 mb-1">체결 일자 *</label>
-                    <div className="relative">
-                      <input
-                        type="date"
-                        required
-                        value={txDate}
-                        onChange={(e) => setTxDate(e.target.value)}
-                        className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 focus:outline-none focus:border-indigo-500 transition-colors"
+                    {/* Fee and Date rows */}
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs font-bold text-slate-400 mb-1">거래 수수료</label>
+                        <input
+                          type="number"
+                          min="0"
+                          step="any"
+                          value={txFee}
+                          onChange={(e) => setTxFee(e.target.value)}
+                          placeholder="0"
+                          className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 focus:outline-none focus:border-indigo-500 transition-colors font-semibold"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-slate-400 mb-1">체결 일자 *</label>
+                        <div className="relative">
+                          <input
+                            type="date"
+                            required
+                            value={txDate}
+                            onChange={(e) => setTxDate(e.target.value)}
+                            className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 focus:outline-none focus:border-indigo-500 transition-colors font-semibold"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Memo input */}
+                    <div>
+                      <label className="block text-xs font-bold text-slate-400 mb-1">매매 메모</label>
+                      <textarea
+                        rows={3}
+                        value={txMemo}
+                        onChange={(e) => setTxMemo(e.target.value)}
+                        placeholder="매수 이유 또는 지지선 저항선 돌파 관련 메모 기록"
+                        className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 focus:outline-none focus:border-indigo-500 transition-colors resize-none font-semibold"
                       />
                     </div>
-                  </div>
+
+                    <button
+                      type="submit"
+                      disabled={actionLoading}
+                      className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 rounded-xl transition-all shadow-md active:scale-[0.98] text-xs flex items-center justify-center gap-2 cursor-pointer"
+                    >
+                      {actionLoading && <RefreshCw className="w-3.5 h-3.5 animate-spin" />}
+                      거래 기록 등록
+                    </button>
+
+                  </form>
                 </div>
-
-                {/* Memo input */}
-                <div>
-                  <label className="block text-xs font-bold text-slate-400 mb-1">매매 메모</label>
-                  <textarea
-                    rows={3}
-                    value={txMemo}
-                    onChange={(e) => setTxMemo(e.target.value)}
-                    placeholder="매수 이유 또는 지지선 저항선 돌파 관련 메모 기록"
-                    className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 focus:outline-none focus:border-indigo-500 transition-colors resize-none"
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={actionLoading}
-                  className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 rounded-xl transition-all shadow-md active:scale-[0.98] text-xs flex items-center justify-center gap-2"
-                >
-                  {actionLoading && <RefreshCw className="w-3.5 h-3.5 animate-spin" />}
-                  거래 기록 등록
-                </button>
-
-              </form>
+              )}
             </div>
 
             {/* Right Col: Filters and Transactions list */}
