@@ -62,3 +62,96 @@
 .dark .glow-card::after {
   background: linear-gradient(to bottom right, rgba(99, 102, 241, 0.25), transparent, rgba(245, 158, 11, 0.1));
 }
+
+/* Premium Cyber Grid Pattern */
+.bg-grid-pattern {
+  background-size: 40px 40px;
+  background-image: 
+    linear-gradient(to right, rgba(99, 102, 241, 0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(99, 102, 241, 0.03) 1px, transparent 1px);
+}
+
+/* Smooth Conic Gradient Glow Border */
+.glowing-border-active {
+  position: relative;
+  overflow: hidden;
+}
+
+.glowing-border-active::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: conic-gradient(
+    from 180deg at 50% 50%,
+    transparent 0deg,
+    rgba(99, 102, 241, 0.3) 120deg,
+    rgba(245, 158, 11, 0.2) 240deg,
+    transparent 360deg
+  );
+  animation: rotate-conic 8s linear infinite;
+  z-index: 0;
+}
+
+.glowing-border-active::after {
+  content: '';
+  position: absolute;
+  inset: 1px;
+  background: rgb(8, 10, 21);
+  border-radius: 31px;
+  z-index: 1;
+}
+
+.glowing-border-content {
+  position: relative;
+  z-index: 2;
+}
+
+@keyframes rotate-conic {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Floating animation details */
+@keyframes float-y-slow {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-15px) rotate(2deg);
+  }
+}
+
+@keyframes float-y-reverse {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(12px) rotate(-3deg);
+  }
+}
+
+.animate-float-y {
+  animation: float-y-slow 8s ease-in-out infinite;
+}
+
+.animate-float-y-reverse {
+  animation: float-y-reverse 10s ease-in-out infinite;
+}
+
+/* Typing text cursor effects */
+.cursor-blink {
+  animation: blink 1s step-end infinite;
+}
+
+@keyframes blink {
+  from, to { border-color: transparent }
+  50% { border-color: rgb(99, 102, 241); }
+}
+

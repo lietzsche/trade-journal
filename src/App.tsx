@@ -18,7 +18,12 @@ import {
   CheckCircle,
   Edit3,
   ShieldAlert,
-  Coins
+  Coins,
+  Eye,
+  EyeOff,
+  Sparkles,
+  ArrowRight,
+  ChevronRight
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -94,6 +99,7 @@ export default function App() {
   const [authNickname, setAuthNickname] = useState('');
   const [authError, setAuthError] = useState<string | null>(null);
   const [authSuccess, setAuthSuccess] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
 
   // Application UI states
   const [activeTab, setActiveTab] = useState<'dashboard' | 'portfolio' | 'transactions'>('dashboard');
@@ -448,118 +454,308 @@ export default function App() {
     setTempPriceValue(item.currentPrice.toString());
   };
 
-  // Render Login & Signup Form (Glassmorphic Interface)
+  // Render Login & Signup Form (Stunning Premium Glassmorphic Split-Screen Interface)
   if (!user) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-900 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-indigo-950 via-slate-950 to-slate-950 text-slate-100 p-4 relative overflow-hidden">
-        {/* Subtle glowing elements */}
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-indigo-500/10 rounded-full blur-[100px] pointer-events-none" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-amber-500/5 rounded-full blur-[120px] pointer-events-none" />
+      <div className="min-h-screen w-full flex bg-slate-950 text-slate-100 font-sans relative overflow-hidden bg-grid-pattern">
+        {/* Dynamic mesh gradients in background */}
+        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-indigo-500/10 rounded-full blur-[120px] pointer-events-none animate-[pulse_10s_infinite_alternate]" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-amber-500/5 rounded-full blur-[140px] pointer-events-none animate-[pulse_12s_infinite_alternate_2s]" />
+        <div className="absolute top-[30%] right-[20%] w-[30%] h-[30%] bg-purple-500/5 rounded-full blur-[100px] pointer-events-none animate-[pulse_8s_infinite_alternate]" />
 
-        <div className="w-full max-w-md z-10">
-          <div className="text-center mb-8">
-            <div className="inline-flex p-3 bg-gradient-to-br from-indigo-500 to-indigo-700 rounded-2xl shadow-lg shadow-indigo-500/20 mb-3">
-              <Coins className="w-8 h-8 text-white animate-pulse" />
-            </div>
-            <h1 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-indigo-200 via-slate-100 to-amber-200 bg-clip-text text-transparent">
-              ANTIGRAVITY STOP
-            </h1>
-            <p className="text-sm text-slate-400 mt-2">
-              트레일링 스톱 자산 관리 & 실시간 거래 일지 플랫폼
-            </p>
-          </div>
+        {/* Ambient floating circles */}
+        <div className="absolute top-12 left-10 w-24 h-24 rounded-full border border-indigo-500/5 pointer-events-none animate-float-y" />
+        <div className="absolute bottom-16 right-12 w-32 h-32 rounded-full border border-amber-500/5 pointer-events-none animate-float-y-reverse" />
 
-          <div className="glass-panel rounded-3xl p-8 shadow-2xl relative border border-slate-800/80">
-            <div className="flex border-b border-slate-800/80 pb-4 mb-6">
-              <button
-                onClick={() => { setAuthMode('signin'); setAuthError(null); }}
-                className={`flex-1 text-center py-2 text-sm font-semibold transition-all ${
-                  authMode === 'signin' ? 'text-indigo-400 border-b-2 border-indigo-500' : 'text-slate-400 hover:text-slate-200'
-                }`}
-              >
-                로그인
-              </button>
-              <button
-                onClick={() => { setAuthMode('signup'); setAuthError(null); }}
-                className={`flex-1 text-center py-2 text-sm font-semibold transition-all ${
-                  authMode === 'signup' ? 'text-indigo-400 border-b-2 border-indigo-500' : 'text-slate-400 hover:text-slate-200'
-                }`}
-              >
-                회원가입
-              </button>
+        <div className="w-full flex">
+          {/* LEFT SIDE: Visual Showcase (Hidden on smaller screens, beautiful presentation on lg+) */}
+          <div className="hidden lg:flex lg:w-7/12 flex-col justify-between p-12 relative z-10 border-r border-slate-900/60">
+            {/* Logo & Header in left side */}
+            <div className="flex items-center gap-3">
+              <div className="p-3 bg-gradient-to-br from-indigo-500 to-indigo-700 rounded-2xl shadow-lg shadow-indigo-500/20">
+                <Coins className="w-6 h-6 text-white animate-[spin_16s_linear_infinite]" />
+              </div>
+              <div>
+                <span className="font-extrabold text-2xl tracking-wider bg-gradient-to-r from-indigo-200 via-indigo-100 to-amber-200 bg-clip-text text-transparent font-display">
+                  FINFOLIO
+                </span>
+                <span className="ml-2 text-[9px] font-bold text-indigo-400 bg-indigo-400/10 px-2 py-0.5 rounded-full uppercase tracking-wider">
+                  v2.0
+                </span>
+              </div>
             </div>
 
-            {authError && (
-              <div className="mb-4 p-3 bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs rounded-xl flex items-center gap-2">
-                <AlertTriangle className="w-4 h-4 shrink-0" />
-                <span>{authError}</span>
+            {/* Interactive Mockups / Feature graphics in middle */}
+            <div className="my-auto space-y-10 max-w-xl">
+              <div className="space-y-4">
+                <div className="inline-flex items-center gap-2 px-3 py-1 bg-indigo-500/10 border border-indigo-500/20 rounded-full text-xs font-semibold text-indigo-300">
+                  <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
+                  <span>스마트 트레일링 스톱 자산 관리 솔루션</span>
+                </div>
+                <h2 className="text-4xl xl:text-5xl font-extrabold leading-[1.15] text-slate-100 tracking-tight">
+                  상승장에서는 <span className="bg-gradient-to-r from-indigo-400 via-purple-400 to-amber-300 bg-clip-text text-transparent">수익 극대화</span>,<br />
+                  하락장에서는 확실한 리스크 제어.
+                </h2>
+                <p className="text-slate-400 text-sm leading-relaxed max-w-lg font-medium">
+                  실시간으로 계좌 평단가 기준의 자동 5% 트레일링 스톱 손절 기준선을 확인하고, 매매 일지와 실시간 포트폴리오를 다각적으로 트래킹합니다.
+                </p>
               </div>
-            )}
 
-            {authSuccess && (
-              <div className="mb-4 p-3 bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs rounded-xl flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 shrink-0" />
-                <span>{authSuccess}</span>
-              </div>
-            )}
+              {/* STUNNING Mockup Card illustrating Trailing Stop logic! */}
+              <div className="backdrop-blur-md bg-slate-900/40 border border-white/5 rounded-[28px] p-6 shadow-2xl relative overflow-hidden group hover:border-indigo-500/25 transition-all duration-500">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/5 rounded-full blur-2xl pointer-events-none" />
+                <div className="flex items-center justify-between mb-4 border-b border-slate-800/60 pb-3">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+                    <span className="text-xs font-bold text-slate-300">실시간 리스크 예측 시뮬레이터</span>
+                  </div>
+                  <span className="text-[10px] bg-slate-800 text-slate-400 font-bold px-2 py-0.5 rounded">KRW/USD 지원</span>
+                </div>
 
-            <form onSubmit={handleAuthSubmit} className="space-y-4">
-              {authMode === 'signup' && (
-                <div>
-                  <label className="block text-xs font-semibold text-slate-400 mb-1.5">닉네임</label>
-                  <div className="relative">
-                    <User className="absolute left-3.5 top-3 w-4 h-4 text-slate-500" />
-                    <input
-                      type="text"
-                      required
-                      value={authNickname}
-                      onChange={(e) => setAuthNickname(e.target.value)}
-                      placeholder="홍길동"
-                      className="w-full bg-slate-950/60 border border-slate-800 rounded-xl py-2.5 pl-10 pr-4 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-indigo-500 transition-colors"
-                    />
+                <div className="space-y-4">
+                  {/* Grid fields */}
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="bg-slate-950/40 p-3 rounded-xl border border-slate-800/40">
+                      <div className="text-[10px] text-slate-500 font-semibold mb-1">진입 단가</div>
+                      <div className="text-xs font-extrabold text-slate-200">10,000 원</div>
+                    </div>
+                    <div className="bg-slate-950/40 p-3 rounded-xl border border-slate-800/40">
+                      <div className="text-[10px] text-indigo-400 font-semibold mb-1">현재 수익 레벨</div>
+                      <div className="text-xs font-extrabold text-indigo-300">Level 2 (+20%)</div>
+                    </div>
+                    <div className="bg-slate-950/40 p-3 rounded-xl border border-indigo-500/30 shadow-[0_0_15px_rgba(99,102,241,0.1)]">
+                      <div className="text-[10px] text-amber-400 font-semibold mb-1">트레일링 스톱가</div>
+                      <div className="text-xs font-extrabold text-amber-300">11,400 원</div>
+                    </div>
+                  </div>
+
+                  {/* Visual Chart Mockup */}
+                  <div className="h-28 relative flex items-end pt-4 bg-slate-950/30 rounded-xl border border-slate-800/40 px-3 overflow-hidden">
+                    <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-indigo-500/5 via-transparent to-transparent pointer-events-none" />
+                    
+                    {/* SVG Graphic illustrating stop loss line trailing behind stock price */}
+                    <svg className="w-full h-full" viewBox="0 0 300 100" fill="none">
+                      {/* Grid Lines */}
+                      <line x1="0" y1="20" x2="300" y2="20" stroke="rgba(255,255,255,0.03)" strokeWidth="1" />
+                      <line x1="0" y1="50" x2="300" y2="50" stroke="rgba(255,255,255,0.03)" strokeWidth="1" />
+                      <line x1="0" y1="80" x2="300" y2="80" stroke="rgba(255,255,255,0.03)" strokeWidth="1" />
+                      
+                      {/* Price Line (Green curve upward) */}
+                      <path d="M 0,90 Q 75,85 110,60 T 200,30 T 300,10" stroke="#10b981" strokeWidth="2.5" strokeLinecap="round" />
+                      <path d="M 0,90 Q 75,85 110,60 T 200,30 T 300,10 L 300,100 L 0,100 Z" fill="url(#price-grad)" opacity="0.1" />
+
+                      {/* Dotted Stop Loss Line trailing underneath */}
+                      <path d="M 0,95 Q 75,90 110,75 T 200,48 T 300,28" stroke="#f59e0b" strokeWidth="2" strokeDasharray="4 3" strokeLinecap="round" />
+
+                      {/* Labels and Dots */}
+                      <circle cx="200" cy="30" r="4" fill="#10b981" />
+                      <circle cx="200" cy="48" r="4" fill="#f59e0b" />
+                      <line x1="200" y1="30" x2="200" y2="48" stroke="rgba(255,255,255,0.2)" strokeWidth="1" strokeDasharray="2 2" />
+
+                      <defs>
+                        <linearGradient id="price-grad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#10b981" />
+                          <stop offset="100%" stopColor="#10b981" stopOpacity="0" />
+                        </linearGradient>
+                      </defs>
+                    </svg>
+
+                    {/* Dotted Label Overlay */}
+                    <div className="absolute top-2 left-4 text-[9px] font-bold text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded">현재 주가</div>
+                    <div className="absolute bottom-6 right-8 text-[9px] font-bold text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded">Trailing Stop 손절선 (-5%)</div>
                   </div>
                 </div>
-              )}
+              </div>
+            </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-slate-400 mb-1.5">이메일 주소</label>
-                <div className="relative">
-                  <Mail className="absolute left-3.5 top-3 w-4 h-4 text-slate-500" />
-                  <input
-                    type="email"
-                    required
-                    value={authEmail}
-                    onChange={(e) => setAuthEmail(e.target.value)}
-                    placeholder="example@email.com"
-                    className="w-full bg-slate-950/60 border border-slate-800 rounded-xl py-2.5 pl-10 pr-4 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-indigo-500 transition-colors"
-                  />
+            {/* Bottom Credits Footer */}
+            <div className="text-xs text-slate-500 flex items-center justify-between">
+              <span>© {new Date().getFullYear()} FINFOLIO. All Rights Reserved.</span>
+              <div className="flex gap-4">
+                <span className="hover:text-slate-400 transition-colors cursor-pointer">안전성 및 개인정보</span>
+                <span className="hover:text-slate-400 transition-colors cursor-pointer">이용약관</span>
+              </div>
+            </div>
+          </div>
+
+          {/* RIGHT SIDE: The Sleek Login / Registration Credentials Form */}
+          <div className="w-full lg:w-5/12 flex items-center justify-center p-6 sm:p-12 relative z-10">
+            <div className="w-full max-w-[420px] space-y-8">
+              
+              {/* Branding for mobile/tablets view only (hidden on large screen left side) */}
+              <div className="text-center lg:hidden animate-in fade-in slide-in-from-top-4 duration-500">
+                <div className="relative inline-flex p-3 bg-gradient-to-br from-indigo-500 to-indigo-700 rounded-2xl shadow-xl shadow-indigo-500/25 mb-3 group overflow-hidden">
+                  <Coins className="w-7 h-7 text-white relative z-10 animate-[spin_12s_linear_infinite]" />
+                </div>
+                <h1 className="text-3xl font-black tracking-[0.15em] font-display bg-gradient-to-r from-indigo-200 via-slate-100 to-amber-200 bg-clip-text text-transparent">
+                  FINFOLIO
+                </h1>
+                <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mt-1.5">
+                  Trailing Stop Asset Manager & Trading Journal
+                </p>
+              </div>
+
+              {/* Form Title description */}
+              <div className="space-y-2 text-center lg:text-left">
+                <h2 className="text-2xl font-extrabold text-slate-100 tracking-tight">
+                  {authMode === 'signin' ? '반갑습니다!' : '새로운 여정의 시작'}
+                </h2>
+                <p className="text-xs text-slate-400 font-medium">
+                  {authMode === 'signin' 
+                    ? '가입하신 이메일과 비밀번호를 입력해 계정에 로그인하세요.'
+                    : '계정을 만들고 리스크를 자동으로 감지하는 최적의 자산 관리를 시작하세요.'}
+                </p>
+              </div>
+
+              {/* Premium Glassmorphic Credentials Panel (Conic glow animated wrapper) */}
+              <div className="glowing-border-active rounded-[32px] shadow-2xl relative">
+                <div className="glowing-border-content bg-slate-950/80 rounded-[31px] p-8 border border-white/5">
+                  
+                  {/* Sliding physical tab pill selector */}
+                  <div className="bg-slate-900/80 p-1 rounded-2xl flex border border-slate-800/50 mb-6 relative">
+                    <button
+                      onClick={() => { setAuthMode('signin'); setAuthError(null); }}
+                      className={`flex-1 text-center py-2.5 text-xs font-bold rounded-xl transition-all duration-300 relative z-10 cursor-pointer ${
+                        authMode === 'signin'
+                          ? 'bg-gradient-to-r from-indigo-500 to-indigo-600 text-white shadow-md shadow-indigo-500/10 font-bold'
+                          : 'text-slate-400 hover:text-slate-200 font-semibold'
+                      }`}
+                    >
+                      로그인
+                    </button>
+                    <button
+                      onClick={() => { setAuthMode('signup'); setAuthError(null); }}
+                      className={`flex-1 text-center py-2.5 text-xs font-bold rounded-xl transition-all duration-300 relative z-10 cursor-pointer ${
+                        authMode === 'signup'
+                          ? 'bg-gradient-to-r from-indigo-500 to-indigo-600 text-white shadow-md shadow-indigo-500/10 font-bold'
+                          : 'text-slate-400 hover:text-slate-200 font-semibold'
+                      }`}
+                    >
+                      회원가입
+                    </button>
+                  </div>
+
+                  {/* Error & Success Alert Boxes with dynamic glow */}
+                  {authError && (
+                    <div className="mb-5 p-3.5 bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs rounded-2xl flex items-start gap-2.5 animate-in fade-in slide-in-from-top-2 duration-200 shadow-[0_0_15px_rgba(244,63,94,0.08)]">
+                      <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-rose-400" />
+                      <span className="font-semibold leading-relaxed">{authError}</span>
+                    </div>
+                  )}
+
+                  {authSuccess && (
+                    <div className="mb-5 p-3.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs rounded-2xl flex items-start gap-2.5 animate-in fade-in slide-in-from-top-2 duration-200 shadow-[0_0_15px_rgba(16,185,129,0.08)]">
+                      <CheckCircle className="w-4 h-4 shrink-0 mt-0.5 text-emerald-400" />
+                      <span className="font-semibold leading-relaxed">{authSuccess}</span>
+                    </div>
+                  )}
+
+                  {/* Interactive Dynamic Form */}
+                  <form onSubmit={handleAuthSubmit} className="space-y-4">
+                    
+                    {/* NICKNAME FIELD (Only for signup) */}
+                    {authMode === 'signup' && (
+                      <div className="space-y-1.5 animate-in fade-in slide-in-from-top-4 duration-300">
+                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">닉네임</label>
+                        <div className="relative group">
+                          <User className="absolute left-4 top-3.5 w-4 h-4 text-slate-500 group-focus-within:text-indigo-400 transition-colors" />
+                          <input
+                            type="text"
+                            required
+                            value={authNickname}
+                            onChange={(e) => setAuthNickname(e.target.value)}
+                            placeholder="홍길동"
+                            className="w-full bg-slate-900/50 border border-slate-800/80 rounded-2xl py-3.5 pl-11 pr-4 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-indigo-500/80 focus:ring-4 focus:ring-indigo-500/10 focus:bg-slate-900/80 transition-all font-semibold"
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    {/* EMAIL FIELD */}
+                    <div className="space-y-1.5">
+                      <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">이메일 주소</label>
+                      <div className="relative group">
+                        <Mail className="absolute left-4 top-3.5 w-4 h-4 text-slate-500 group-focus-within:text-indigo-400 transition-colors" />
+                        <input
+                          type="email"
+                          required
+                          value={authEmail}
+                          onChange={(e) => setAuthEmail(e.target.value)}
+                          placeholder="example@email.com"
+                          className="w-full bg-slate-900/50 border border-slate-800/80 rounded-2xl py-3.5 pl-11 pr-4 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-indigo-500/80 focus:ring-4 focus:ring-indigo-500/10 focus:bg-slate-900/80 transition-all font-semibold"
+                        />
+                      </div>
+                    </div>
+
+                    {/* PASSWORD FIELD */}
+                    <div className="space-y-1.5">
+                      <div className="flex justify-between items-center ml-1">
+                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">비밀번호</label>
+                        {authMode === 'signin' && (
+                          <span className="text-[10px] font-semibold text-indigo-400 hover:text-indigo-300 transition-colors cursor-pointer">
+                            비밀번호를 찾으시나요?
+                          </span>
+                        )}
+                      </div>
+                      <div className="relative group">
+                        <Lock className="absolute left-4 top-3.5 w-4 h-4 text-slate-500 group-focus-within:text-indigo-400 transition-colors" />
+                        <input
+                          type={showPassword ? "text" : "password"}
+                          required
+                          value={authPassword}
+                          onChange={(e) => setAuthPassword(e.target.value)}
+                          placeholder="••••••••"
+                          className="w-full bg-slate-900/50 border border-slate-800/80 rounded-2xl py-3.5 pl-11 pr-12 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-indigo-500/80 focus:ring-4 focus:ring-indigo-500/10 focus:bg-slate-900/80 transition-all font-semibold"
+                        />
+                        {/* Password visibility toggle */}
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-4 top-3.5 text-slate-500 hover:text-slate-350 transition-colors cursor-pointer flex items-center justify-center"
+                        >
+                          {showPassword ? <EyeOff className="w-4 h-4 text-slate-400 hover:text-slate-200" /> : <Eye className="w-4 h-4 text-slate-400 hover:text-slate-200" />}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* SUBMIT BUTTON WITH PREMIUM SHADOW GLOW */}
+                    <button
+                      type="submit"
+                      disabled={actionLoading}
+                      className="w-full bg-gradient-to-r from-indigo-500 via-indigo-600 to-indigo-700 hover:from-indigo-600 hover:to-indigo-850 text-white font-bold py-4 rounded-2xl transition-all shadow-lg shadow-indigo-500/20 active:scale-[0.98] disabled:opacity-50 text-xs flex items-center justify-center gap-2 cursor-pointer mt-4 hover:shadow-indigo-500/30"
+                    >
+                      {actionLoading ? (
+                        <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                      ) : (
+                        <>
+                          <span>{authMode === 'signin' ? '로그인 완료하기' : '지금 무료 가입하기'}</span>
+                          <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
+                        </>
+                      )}
+                    </button>
+                  </form>
+
                 </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-slate-400 mb-1.5">비밀번호</label>
-                <div className="relative">
-                  <Lock className="absolute left-3.5 top-3 w-4 h-4 text-slate-500" />
-                  <input
-                    type="password"
-                    required
-                    value={authPassword}
-                    onChange={(e) => setAuthPassword(e.target.value)}
-                    placeholder="••••••••"
-                    className="w-full bg-slate-950/60 border border-slate-800 rounded-xl py-2.5 pl-10 pr-4 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-indigo-500 transition-colors"
-                  />
+              {/* Extra features listing for visual assurance under form */}
+              <div className="bg-slate-900/30 rounded-2xl p-4 border border-slate-800/30 flex items-center justify-between text-center lg:text-left">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-lg">
+                    <Sparkles className="w-3.5 h-3.5" />
+                  </div>
+                  <div className="text-left">
+                    <div className="text-[10px] text-slate-300 font-extrabold">안전한 데이터 보관</div>
+                    <div className="text-[8.5px] text-slate-500 font-semibold leading-normal">Cloudflare D1 암호화 및 토큰 인증서 사용</div>
+                  </div>
+                </div>
+                <div className="text-slate-400 text-xs flex items-center gap-1 hover:text-slate-200 transition-colors cursor-pointer">
+                  <span>자세히 보기</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
                 </div>
               </div>
 
-              <button
-                type="submit"
-                disabled={actionLoading}
-                className="w-full bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-white font-bold py-3 rounded-xl transition-all shadow-lg shadow-indigo-500/20 active:scale-[0.98] disabled:opacity-50 text-sm flex items-center justify-center gap-2"
-              >
-                {actionLoading && <RefreshCw className="w-4 h-4 animate-spin" />}
-                {authMode === 'signin' ? '로그인 완료' : '계정 생성'}
-              </button>
-            </form>
+            </div>
           </div>
         </div>
       </div>
