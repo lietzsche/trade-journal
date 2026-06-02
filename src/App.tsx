@@ -46,6 +46,7 @@ interface PortfolioItem {
   buyPrice: number;
   quantity: number;
   currentPrice: number;
+  currency: 'KRW' | 'USD';
   memo?: string;
   updatedAt: string;
   pnlPercent: number;
@@ -63,6 +64,7 @@ interface Transaction {
   price: number;
   quantity: number;
   fee: number;
+  currency: 'KRW' | 'USD';
   tradeDate: string;
   memo?: string;
   createdAt: string;
@@ -137,6 +139,28 @@ export default function App() {
   const [txError, setTxError] = useState<string | null>(null);
   const [txSuccess, setTxSuccess] = useState<string | null>(null);
 
+  // Multi-currency and Exchange Rate settings
+  const [preferredCurrency, setPreferredCurrency] = useState<'KRW' | 'USD'>(
+    (localStorage.getItem('preferred_currency') as 'KRW' | 'USD') || 'KRW'
+  );
+  const [exchangeRate, setExchangeRate] = useState<number>(
+    Number(localStorage.getItem('exchange_rate') || '1350')
+  );
+
+  // Form currency states
+  const [txCurrency, setTxCurrency] = useState<'KRW' | 'USD'>('KRW');
+
+  // Edit Transaction Modal states
+  const [editingTxId, setEditingTxId] = useState<number | null>(null);
+  const [editTxTicker, setEditTxTicker] = useState('');
+  const [editTxType, setEditTxType] = useState<'BUY' | 'SELL'>('BUY');
+  const [editTxPrice, setEditTxPrice] = useState('');
+  const [editTxQuantity, setEditTxQuantity] = useState('');
+  const [editTxFee, setEditTxFee] = useState('0');
+  const [editTxCurrency, setEditTxCurrency] = useState<'KRW' | 'USD'>('KRW');
+  const [editTxDate, setEditTxDate] = useState('');
+  const [editTxMemo, setEditTxMemo] = useState('');
+
   // Sync theme with system and body element
   useEffect(() => {
     if (darkMode) {
@@ -157,12 +181,12 @@ export default function App() {
     }
   }, [token]);
 
-  // Fetch all core data when user session is active
+  // Fetch all core data when user session is active or currency settings change
   useEffect(() => {
     if (user && token) {
       loadAllData();
     }
-  }, [user, token]);
+  }, [user, token, preferredCurrency, exchangeRate]);
 
   // Helper fetch function that automatically sets authorization headers
   const fetchWithAuth = async (url: string, options: RequestInit = {}) => {
@@ -226,8 +250,8 @@ export default function App() {
         setTransactions(txRes.transactions);
       }
 
-      // Load Dashboard Stats
-      const dashRes = await fetchWithAuth('/api/dashboard');
+      // Load Dashboard Stats (with preferredCurrency and exchangeRate query params)
+      const dashRes = await fetchWithAuth(`/api/dashboard?preferredCurrency=${preferredCurrency}&exchangeRate=${exchangeRate}`);
       if (dashRes.success) {
         setDashboardStats(dashRes.stats);
         setAllocationChart(dashRes.charts.allocation);
@@ -239,6 +263,13 @@ export default function App() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const formatCurrency = (val: number, cur: string = 'KRW') => {
+    if (cur === 'USD') {
+      return '$' + Number(val).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+    return Number(val).toLocaleString('ko-KR') + '원';
   };
 
   // Auth Action Handlers
@@ -307,6 +338,7 @@ export default function App() {
           price: parseFloat(txPrice),
           quantity: parseFloat(txQuantity),
           fee: parseFloat(txFee || '0'),
+          currency: txCurrency,
           tradeDate: txDate,
           memo: txMemo,
         }),
@@ -326,6 +358,49 @@ export default function App() {
     } finally {
       setActionLoading(false);
     }
+  };
+
+  // Transaction Editing Submission
+  const handleEditTransaction = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (editingTxId === null) return;
+    setActionLoading(true);
+
+    try {
+      await fetchWithAuth(`/api/transactions/${editingTxId}`, {
+        method: 'PUT',
+        body: JSON.stringify({
+          ticker: editTxTicker,
+          type: editTxType,
+          price: parseFloat(editTxPrice),
+          quantity: parseFloat(editTxQuantity),
+          fee: parseFloat(editTxFee || '0'),
+          currency: editTxCurrency,
+          tradeDate: editTxDate,
+          memo: editTxMemo,
+        }),
+      });
+
+      setEditingTxId(null); // Close modal
+      await loadAllData();
+    } catch (err: any) {
+      alert(err.message);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  // Helper to open edit modal
+  const startEditTransaction = (tx: any) => {
+    setEditingTxId(tx.id);
+    setEditTxTicker(tx.ticker);
+    setEditTxType(tx.type);
+    setEditTxPrice(tx.price.toString());
+    setEditTxQuantity(tx.quantity.toString());
+    setEditTxFee(tx.fee.toString());
+    setEditTxCurrency(tx.currency || 'KRW');
+    setEditTxDate(tx.tradeDate);
+    setEditTxMemo(tx.memo || '');
   };
 
   // Transaction Deletion
@@ -628,6 +703,68 @@ export default function App() {
               </div>
             )}
 
+            {/* Currency & Exchange Rate settings bar */}
+            <div className="glass-panel rounded-2xl p-5 mb-6 shadow-sm border border-slate-200 dark:border-slate-800/80 flex flex-col md:flex-row items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-xl">
+                  <Coins className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-slate-700 dark:text-slate-200">대시보드 통화 및 환율 설정</h3>
+                  <p className="text-slate-400 text-xs mt-0.5">대시보드의 합산 통화와 수동 환율 기준을 구성합니다.</p>
+                </div>
+              </div>
+              <div className="flex flex-wrap items-center gap-4 w-full md:w-auto justify-end">
+                {/* Preferred Currency Toggle */}
+                <div className="flex items-center bg-slate-100 dark:bg-slate-900 rounded-xl p-1 border border-slate-200/50 dark:border-slate-800">
+                  <button
+                    onClick={() => {
+                      setPreferredCurrency('KRW');
+                      localStorage.setItem('preferred_currency', 'KRW');
+                    }}
+                    className={`px-4 py-2 text-xs font-bold rounded-lg transition-all ${
+                      preferredCurrency === 'KRW'
+                        ? 'bg-white dark:bg-slate-800 text-emerald-600 shadow-sm'
+                        : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                    }`}
+                  >
+                    ₩ KRW (원화)
+                  </button>
+                  <button
+                    onClick={() => {
+                      setPreferredCurrency('USD');
+                      localStorage.setItem('preferred_currency', 'USD');
+                    }}
+                    className={`px-4 py-2 text-xs font-bold rounded-lg transition-all ${
+                      preferredCurrency === 'USD'
+                        ? 'bg-white dark:bg-slate-800 text-emerald-600 shadow-sm'
+                        : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                    }`}
+                  >
+                    $ USD (달러)
+                  </button>
+                </div>
+
+                {/* Exchange Rate Input */}
+                <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-900 rounded-xl px-3 py-1.5 border border-slate-200/50 dark:border-slate-800">
+                  <span className="text-xs font-bold text-slate-500">수동 환율:</span>
+                  <input
+                    type="number"
+                    value={exchangeRate}
+                    onChange={(e) => {
+                      const val = parseFloat(e.target.value) || 1;
+                      setExchangeRate(val);
+                      localStorage.setItem('exchange_rate', val.toString());
+                    }}
+                    className="w-20 bg-transparent text-xs font-bold font-mono focus:outline-none border-b border-transparent focus:border-emerald-500 text-right pr-1 dark:text-slate-100"
+                    min="1"
+                    step="0.1"
+                  />
+                  <span className="text-xs text-slate-400 font-bold">₩/$</span>
+                </div>
+              </div>
+            </div>
+
             {/* Metrics cards grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               
@@ -640,8 +777,9 @@ export default function App() {
                   </div>
                 </div>
                 <div className="text-2xl font-extrabold">
-                  {dashboardStats.totalPortfolioValue.toLocaleString(undefined, { minimumFractionDigits: 0 })}
-                  <span className="text-sm font-semibold text-slate-500 ml-1">원</span>
+                  {preferredCurrency === 'USD' ? '$' : ''}
+                  {dashboardStats.totalPortfolioValue.toLocaleString(undefined, { minimumFractionDigits: preferredCurrency === 'USD' ? 2 : 0, maximumFractionDigits: preferredCurrency === 'USD' ? 2 : 0 })}
+                  <span className="text-sm font-semibold text-slate-500 ml-1">{preferredCurrency === 'USD' ? 'USD' : '원'}</span>
                 </div>
                 <p className="text-slate-400 text-xs mt-2">현재 보유 자산의 시장 평가 총 가치</p>
               </div>
@@ -662,8 +800,9 @@ export default function App() {
                   dashboardStats.totalUnrealizedPnL >= 0 ? 'text-emerald-500' : 'text-rose-500'
                 }`}>
                   {dashboardStats.totalUnrealizedPnL >= 0 ? '+' : ''}
-                  {dashboardStats.totalUnrealizedPnL.toLocaleString(undefined, { minimumFractionDigits: 0 })}
-                  <span className="text-sm font-semibold ml-1">원</span>
+                  {preferredCurrency === 'USD' ? '$' : ''}
+                  {dashboardStats.totalUnrealizedPnL.toLocaleString(undefined, { minimumFractionDigits: preferredCurrency === 'USD' ? 2 : 0, maximumFractionDigits: preferredCurrency === 'USD' ? 2 : 0 })}
+                  <span className="text-sm font-semibold ml-1">{preferredCurrency === 'USD' ? 'USD' : '원'}</span>
                 </div>
                 <p className="text-slate-400 text-xs mt-2">보유 중 종목들의 현재가 대비 총 이익</p>
               </div>
@@ -684,8 +823,9 @@ export default function App() {
                   dashboardStats.totalRealizedPnL >= 0 ? 'text-emerald-500' : 'text-rose-500'
                 }`}>
                   {dashboardStats.totalRealizedPnL >= 0 ? '+' : ''}
-                  {dashboardStats.totalRealizedPnL.toLocaleString(undefined, { minimumFractionDigits: 0 })}
-                  <span className="text-sm font-semibold ml-1">원</span>
+                  {preferredCurrency === 'USD' ? '$' : ''}
+                  {dashboardStats.totalRealizedPnL.toLocaleString(undefined, { minimumFractionDigits: preferredCurrency === 'USD' ? 2 : 0, maximumFractionDigits: preferredCurrency === 'USD' ? 2 : 0 })}
+                  <span className="text-sm font-semibold ml-1">{preferredCurrency === 'USD' ? 'USD' : '원'}</span>
                 </div>
                 <p className="text-slate-400 text-xs mt-2">매도로 인해 실제로 확정된 누적 익절손익</p>
               </div>
@@ -735,6 +875,7 @@ export default function App() {
                             borderColor: darkMode ? '#334155' : '#cbd5e1',
                             color: darkMode ? '#f8fafc' : '#0f172a',
                           }}
+                          formatter={(value) => [formatCurrency(Number(value), preferredCurrency), '누적 손익']}
                         />
                         <Area
                           type="monotone"
@@ -743,7 +884,7 @@ export default function App() {
                           strokeWidth={2}
                           fillOpacity={1}
                           fill="url(#colorCumulative)"
-                          name="누적 손익 (원)"
+                          name={`누적 손익 (${preferredCurrency === 'USD' ? 'USD' : '원'})`}
                         />
                       </AreaChart>
                     </ResponsiveContainer>
@@ -785,7 +926,7 @@ export default function App() {
                                 borderColor: darkMode ? '#334155' : '#cbd5e1',
                                 color: darkMode ? '#f8fafc' : '#0f172a',
                               }}
-                              formatter={(value) => `${Number(value).toLocaleString()}원`}
+                              formatter={(value) => formatCurrency(Number(value), preferredCurrency)}
                             />
                           </PieChart>
                         </ResponsiveContainer>
@@ -892,7 +1033,7 @@ export default function App() {
                         <tr key={item.id} className="hover:bg-slate-100/40 dark:hover:bg-slate-900/10 transition-colors">
                           <td className="py-4 px-6 font-extrabold tracking-wider">{item.ticker}</td>
                           <td className="py-4 px-6 text-right font-semibold">{item.quantity.toLocaleString()}개</td>
-                          <td className="py-4 px-6 text-right font-mono">{item.buyPrice.toLocaleString()}원</td>
+                          <td className="py-4 px-6 text-right font-mono">{formatCurrency(item.buyPrice, item.currency)}</td>
                           
                           {/* Current price editable cell */}
                           <td className="py-4 px-6 text-right">
@@ -925,7 +1066,7 @@ export default function App() {
                               </div>
                             ) : (
                               <div className="flex items-center justify-end gap-2 group">
-                                <span className="font-mono font-bold">{item.currentPrice.toLocaleString()}원</span>
+                                <span className="font-mono font-bold">{formatCurrency(item.currentPrice, item.currency)}</span>
                                 <button
                                   onClick={() => handleStartEditing(item)}
                                   className="text-slate-400 hover:text-indigo-500 p-1 opacity-0 group-hover:opacity-100 transition-opacity"
@@ -938,7 +1079,7 @@ export default function App() {
                           </td>
 
                           <td className="py-4 px-6 text-right font-mono font-semibold">
-                            {item.marketValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}원
+                            {formatCurrency(item.marketValue, item.currency)}
                           </td>
 
                           {/* Realized/Unrealized color badges */}
@@ -952,7 +1093,7 @@ export default function App() {
                               </span>
                               <span className={`text-[10px] ${item.unrealizedPnL >= 0 ? 'text-emerald-500/80' : 'text-rose-500/80'}`}>
                                 ({item.unrealizedPnL >= 0 ? '+' : ''}
-                                {item.unrealizedPnL.toLocaleString(undefined, { maximumFractionDigits: 0 })}원)
+                                {formatCurrency(item.unrealizedPnL, item.currency)})
                               </span>
                             </div>
                           </td>
@@ -971,7 +1112,7 @@ export default function App() {
                           {/* Stop Loss (If dynamic status warning is below target) */}
                           <td className="py-4 px-6 text-right font-bold font-mono">
                             <span className={item.currentPrice <= item.stopLoss ? 'text-rose-500 animate-pulse' : 'text-rose-500 dark:text-rose-400'}>
-                              {item.stopLoss.toLocaleString()}원
+                              {formatCurrency(item.stopLoss, item.currency)}
                             </span>
                             {item.currentPrice <= item.stopLoss && (
                               <span className="block text-[9px] text-rose-500 font-extrabold uppercase mt-0.5">이탈 (STOP TRIGGERED)</span>
@@ -980,7 +1121,7 @@ export default function App() {
 
                           {/* Next Target */}
                           <td className="py-4 px-6 text-right font-bold font-mono text-indigo-600 dark:text-indigo-400">
-                            {item.nextTarget.toLocaleString()}원
+                            {formatCurrency(item.nextTarget, item.currency)}
                           </td>
 
                           <td className="py-4 px-6 text-slate-400 max-w-xs truncate" title={item.memo || ''}>
@@ -1031,17 +1172,30 @@ export default function App() {
 
               <form onSubmit={handleAddTransaction} className="space-y-4 text-xs">
                 
-                {/* Ticker input */}
-                <div>
-                  <label className="block text-xs font-bold text-slate-400 mb-1">종목 티커 *</label>
-                  <input
-                    type="text"
-                    required
-                    value={txTicker}
-                    onChange={(e) => setTxTicker(e.target.value)}
-                    placeholder="AAPL, TSLA, 005930 등"
-                    className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 focus:outline-none focus:border-indigo-500 transition-colors dark:text-slate-100 uppercase"
-                  />
+                {/* Ticker and Currency input */}
+                <div className="grid grid-cols-3 gap-2">
+                  <div className="col-span-2">
+                    <label className="block text-xs font-bold text-slate-400 mb-1">종목 티커 *</label>
+                    <input
+                      type="text"
+                      required
+                      value={txTicker}
+                      onChange={(e) => setTxTicker(e.target.value)}
+                      placeholder="AAPL, TSLA, 005930 등"
+                      className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 focus:outline-none focus:border-indigo-500 transition-colors dark:text-slate-100 uppercase"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-400 mb-1">거래 통화 *</label>
+                    <select
+                      value={txCurrency}
+                      onChange={(e) => setTxCurrency(e.target.value as 'KRW' | 'USD')}
+                      className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 focus:outline-none focus:border-indigo-500 transition-colors font-bold text-slate-700 dark:text-slate-300"
+                    >
+                      <option value="KRW">₩ KRW</option>
+                      <option value="USD">$ USD</option>
+                    </select>
+                  </div>
                 </div>
 
                 {/* Type Selection (BUY/SELL) */}
@@ -1269,16 +1423,24 @@ export default function App() {
                                 {tx.type}
                               </span>
                             </td>
-                            <td className="py-3.5 px-5 text-right font-mono font-semibold">{tx.price.toLocaleString()}원</td>
+                            <td className="py-3.5 px-5 text-right font-mono font-semibold">{formatCurrency(tx.price, tx.currency)}</td>
                             <td className="py-3.5 px-5 text-right font-semibold">{tx.quantity.toLocaleString()}개</td>
                             <td className="py-3.5 px-5 text-right font-mono font-extrabold text-slate-700 dark:text-slate-300">
-                              {(tx.price * tx.quantity).toLocaleString(undefined, { maximumFractionDigits: 0 })}원
+                              {formatCurrency(tx.price * tx.quantity, tx.currency)}
                             </td>
-                            <td className="py-3.5 px-5 text-right font-mono text-slate-400">{tx.fee.toLocaleString()}원</td>
+                            <td className="py-3.5 px-5 text-right font-mono text-slate-400">{formatCurrency(tx.fee, tx.currency)}</td>
                             <td className="py-3.5 px-5 text-slate-400 max-w-xs truncate" title={tx.memo || ''}>
                               {tx.memo || '-'}
                             </td>
-                            <td className="py-3.5 px-5 text-center">
+                            <td className="py-3.5 px-5 text-center flex items-center justify-center gap-1.5">
+                              <button
+                                onClick={() => startEditTransaction(tx)}
+                                disabled={actionLoading}
+                                className="text-indigo-500 hover:bg-indigo-500/10 p-1.5 rounded-lg border border-transparent hover:border-indigo-500/20 transition-all active:scale-95 disabled:opacity-50"
+                                title="거래 내역 수정"
+                              >
+                                <Edit3 className="w-3.5 h-3.5" />
+                              </button>
                               <button
                                 onClick={() => handleDeleteTransaction(tx.id)}
                                 disabled={actionLoading}
@@ -1318,6 +1480,155 @@ export default function App() {
           </p>
         </div>
       </footer>
+
+      {/* Transaction Edit Modal Overlay */}
+      {editingTxId !== null && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-sm">
+          <div className="glass-panel w-full max-w-md rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800/80 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+            <div className="px-6 py-4 bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200/60 dark:border-slate-800/80 flex items-center justify-between">
+              <h3 className="font-extrabold text-sm text-slate-800 dark:text-slate-200">거래 내역 수정</h3>
+              <button
+                onClick={() => setEditingTxId(null)}
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-lg font-bold"
+              >
+                &times;
+              </button>
+            </div>
+            <form onSubmit={handleEditTransaction} className="p-6 space-y-4 text-xs">
+              <div className="grid grid-cols-3 gap-2">
+                <div className="col-span-2">
+                  <label className="block text-xs font-bold text-slate-400 mb-1">종목 티커 *</label>
+                  <input
+                    type="text"
+                    required
+                    value={editTxTicker}
+                    onChange={(e) => setEditTxTicker(e.target.value)}
+                    placeholder="AAPL, TSLA 등"
+                    className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 focus:outline-none focus:border-indigo-500 transition-colors uppercase dark:text-slate-100"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-400 mb-1">거래 통화 *</label>
+                  <select
+                    value={editTxCurrency}
+                    onChange={(e) => setEditTxCurrency(e.target.value as 'KRW' | 'USD')}
+                    className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 focus:outline-none focus:border-indigo-500 transition-colors font-bold text-slate-700 dark:text-slate-300"
+                  >
+                    <option value="KRW">₩ KRW</option>
+                    <option value="USD">$ USD</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-400 mb-1.5">거래 구분 *</label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setEditTxType('BUY')}
+                    className={`py-2 px-4 rounded-xl font-bold border transition-all text-center ${
+                      editTxType === 'BUY'
+                        ? 'bg-emerald-500/10 border-emerald-500 text-emerald-600 dark:text-emerald-400'
+                        : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-500'
+                    }`}
+                  >
+                    매수 (BUY)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEditTxType('SELL')}
+                    className={`py-2 px-4 rounded-xl font-bold border transition-all text-center ${
+                      editTxType === 'SELL'
+                        ? 'bg-rose-500/10 border-rose-500 text-rose-600 dark:text-rose-400'
+                        : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-500'
+                    }`}
+                  >
+                    매도 (SELL)
+                  </button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-400 mb-1">체결 단가 *</label>
+                  <input
+                    type="number"
+                    required
+                    min="0.01"
+                    step="any"
+                    value={editTxPrice}
+                    onChange={(e) => setEditTxPrice(e.target.value)}
+                    className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 focus:outline-none dark:text-slate-100"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-400 mb-1">체결 수량 *</label>
+                  <input
+                    type="number"
+                    required
+                    min="0.0001"
+                    step="any"
+                    value={editTxQuantity}
+                    onChange={(e) => setEditTxQuantity(e.target.value)}
+                    className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 focus:outline-none dark:text-slate-100"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-400 mb-1">거래 수수료</label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="any"
+                    value={editTxFee}
+                    onChange={(e) => setEditTxFee(e.target.value)}
+                    className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 focus:outline-none dark:text-slate-100"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-400 mb-1">체결 일자 *</label>
+                  <input
+                    type="date"
+                    required
+                    value={editTxDate}
+                    onChange={(e) => setEditTxDate(e.target.value)}
+                    className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 focus:outline-none dark:text-slate-100"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-400 mb-1">매매 메모</label>
+                <textarea
+                  rows={3}
+                  value={editTxMemo}
+                  onChange={(e) => setEditTxMemo(e.target.value)}
+                  className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 focus:outline-none resize-none dark:text-slate-100"
+                />
+              </div>
+
+              <div className="flex gap-2.5 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setEditingTxId(null)}
+                  className="flex-1 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold py-2.5 rounded-xl transition-all"
+                >
+                  취소
+                </button>
+                <button
+                  type="submit"
+                  disabled={actionLoading}
+                  className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 rounded-xl transition-all shadow-md active:scale-95 disabled:opacity-50"
+                >
+                  저장하기
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
     </div>
   );

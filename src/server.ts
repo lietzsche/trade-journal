@@ -62,6 +62,10 @@ async function recalculatePortfolio(db: any, userId: number, ticker: string) {
 
   let quantity = 0;
   let buyPrice = 0;
+  let currency = 'KRW';
+  if (txs.length > 0) {
+    currency = txs[0].currency || 'KRW';
+  }
 
   for (const tx of txs) {
     if (tx.type === 'BUY') {
@@ -98,6 +102,7 @@ async function recalculatePortfolio(db: any, userId: number, ticker: string) {
         .set({
           buyPrice,
           quantity,
+          currency,
           updatedAt: new Date().toISOString(),
         })
         .where(eq(schema.portfolio.id, existing.id));
@@ -110,6 +115,7 @@ async function recalculatePortfolio(db: any, userId: number, ticker: string) {
           buyPrice,
           quantity,
           currentPrice: buyPrice, // Default current price to the first buy price
+          currency,
           updatedAt: new Date().toISOString(),
         });
     }
@@ -369,7 +375,7 @@ authApp.post('/transactions', async (c) => {
   const userId = c.get('userId');
   const body = await c.req.json();
 
-  const { ticker, type, price, quantity, fee, tradeDate, memo } = body;
+  const { ticker, type, price, quantity, fee, currency, tradeDate, memo } = body;
 
   if (!ticker || !type || !price || !quantity || !tradeDate) {
     return c.json({ error: '필수 필드를 누락했습니다. (티커, 구분, 단가, 수량, 날짜)' }, 400);
@@ -418,6 +424,7 @@ authApp.post('/transactions', async (c) => {
         price: numPrice,
         quantity: numQuantity,
         fee: numFee,
+        currency: currency || 'KRW',
         tradeDate,
         memo,
         createdAt: new Date().toISOString(),
@@ -488,10 +495,94 @@ authApp.delete('/transactions/:id', async (c) => {
   }
 });
 
+// E-2. Update/Edit Transaction
+authApp.put('/transactions/:id', async (c) => {
+  const db = drizzle(c.env.DB, { schema });
+  const userId = c.get('userId');
+  const id = parseInt(c.req.param('id'));
+  const body = await c.req.json();
+
+  const { ticker, type, price, quantity, fee, currency, tradeDate, memo } = body;
+
+  if (!ticker || !type || !price || !quantity || !tradeDate) {
+    return c.json({ error: '필수 필드를 누락했습니다. (티커, 구분, 단가, 수량, 날짜)' }, 400);
+  }
+
+  if (type !== 'BUY' && type !== 'SELL') {
+    return c.json({ error: '거래 구분은 BUY 또는 SELL만 가능합니다.' }, 400);
+  }
+
+  const normalizedTicker = ticker.trim().toUpperCase();
+  const numPrice = Number(price);
+  const numQuantity = Number(quantity);
+  const numFee = Number(fee || 0);
+
+  if (isNaN(numPrice) || numPrice <= 0 || isNaN(numQuantity) || numQuantity <= 0 || isNaN(numFee) || numFee < 0) {
+    return c.json({ error: '단가, 수량, 수수료는 올바른 양수여야 합니다.' }, 400);
+  }
+
+  try {
+    // Find transaction to update
+    const [existingTx] = await db
+      .select()
+      .from(schema.portfolioTransactions)
+      .where(
+        and(
+          eq(schema.portfolioTransactions.id, id),
+          eq(schema.portfolioTransactions.userId, userId)
+        )
+      );
+
+    if (!existingTx) {
+      return c.json({ error: '수정하려는 거래를 찾을 수 없거나 권한이 없습니다.' }, 404);
+    }
+
+    // Update transaction
+    await db
+      .update(schema.portfolioTransactions)
+      .set({
+        ticker: normalizedTicker,
+        type,
+        price: numPrice,
+        quantity: numQuantity,
+        fee: numFee,
+        currency: currency || 'KRW',
+        tradeDate,
+        memo,
+      })
+      .where(eq(schema.portfolioTransactions.id, id));
+
+    // Recalculate portfolio state for the old and new ticker (in case ticker was changed)
+    await recalculatePortfolio(db, userId, existingTx.ticker);
+    if (existingTx.ticker !== normalizedTicker) {
+      await recalculatePortfolio(db, userId, normalizedTicker);
+    }
+
+    return c.json({ success: true, message: '거래 내역이 수정되었으며 보유 자산이 재계산되었습니다.' });
+  } catch (err: any) {
+    return c.json({ error: '거래 내역 수정 중 오류가 발생했습니다: ' + err.message }, 500);
+  }
+});
+
 // F. Dashboard Stats and Complex Financial Metrics
 authApp.get('/dashboard', async (c) => {
   const db = drizzle(c.env.DB, { schema });
   const userId = c.get('userId');
+
+  const preferredCurrency = c.req.query('preferredCurrency') || 'KRW';
+  const exchangeRate = Number(c.req.query('exchangeRate') || '1350');
+
+  // Currency Converter helper
+  const convertValue = (val: number, from: string) => {
+    if (from === preferredCurrency) return val;
+    if (from === 'USD' && preferredCurrency === 'KRW') {
+      return val * exchangeRate;
+    }
+    if (from === 'KRW' && preferredCurrency === 'USD') {
+      return val / exchangeRate;
+    }
+    return val;
+  };
 
   try {
     // 1. Fetch all holdings for Unrealized P&L
@@ -507,14 +598,16 @@ authApp.get('/dashboard', async (c) => {
 
     holdings.forEach((item: any) => {
       const pnl = (item.currentPrice - item.buyPrice) * item.quantity;
-      totalUnrealizedPnL += pnl;
+      const convertedPnL = convertValue(pnl, item.currency || 'KRW');
+      totalUnrealizedPnL += convertedPnL;
       
       const marketVal = item.currentPrice * item.quantity;
-      totalPortfolioValue += marketVal;
+      const convertedMarketVal = convertValue(marketVal, item.currency || 'KRW');
+      totalPortfolioValue += convertedMarketVal;
 
       allocationChart.push({
         name: item.ticker,
-        value: Number(marketVal.toFixed(2)),
+        value: Number(convertedMarketVal.toFixed(2)),
       });
     });
 
@@ -530,13 +623,13 @@ authApp.get('/dashboard', async (c) => {
     let winTradesCount = 0;
 
     // Track state per ticker to calculate cost basis at each SELL point
-    const activeHoldings: Record<string, { quantity: number; buyPrice: number }> = {};
+    const activeHoldings: Record<string, { quantity: number; buyPrice: number; currency: string }> = {};
     const monthlyPnL: Record<string, number> = {};
 
     allTxs.forEach((tx: any) => {
       const ticker = tx.ticker;
       if (!activeHoldings[ticker]) {
-        activeHoldings[ticker] = { quantity: 0, buyPrice: 0 };
+        activeHoldings[ticker] = { quantity: 0, buyPrice: 0, currency: tx.currency || 'KRW' };
       }
 
       const hold = activeHoldings[ticker];
@@ -554,11 +647,12 @@ authApp.get('/dashboard', async (c) => {
           const sellQty = Math.min(hold.quantity, tx.quantity);
           const realized = (tx.price - hold.buyPrice) * sellQty - tx.fee;
           
-          totalRealizedPnL += realized;
+          const convertedRealized = convertValue(realized, tx.currency || 'KRW');
+          totalRealizedPnL += convertedRealized;
 
           // Record monthly PnL curve
           const month = tx.tradeDate.substring(0, 7); // Format: 'YYYY-MM'
-          monthlyPnL[month] = (monthlyPnL[month] || 0) + realized;
+          monthlyPnL[month] = (monthlyPnL[month] || 0) + convertedRealized;
 
           if (realized > 0) {
             winTradesCount++;

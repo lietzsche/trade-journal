@@ -17,6 +17,7 @@ export const portfolio = sqliteTable('portfolio', {
   buyPrice: real('buy_price').notNull(),
   quantity: real('quantity').notNull(),
   currentPrice: real('current_price').notNull(),
+  currency: text('currency').$type<'KRW' | 'USD'>().default('KRW').notNull(),
   memo: text('memo'),
   updatedAt: text('updated_at').default(sql`CURRENT_TIMESTAMP`).notNull(),
 });
@@ -29,6 +30,7 @@ export const portfolioTransactions = sqliteTable('portfolio_transactions', {
   price: real('price').notNull(),
   quantity: real('quantity').notNull(),
   fee: real('fee').default(0).notNull(),
+  currency: text('currency').$type<'KRW' | 'USD'>().default('KRW').notNull(),
   tradeDate: text('trade_date').notNull(),
   memo: text('memo'),
   createdAt: text('created_at').default(sql`CURRENT_TIMESTAMP`).notNull(),
