@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "db:migrate": "wrangler d1 migrations apply trade-journal-db --local",
+    "db:deploy": "wrangler d1 migrations apply trade-journal-db --remote"
   },
   "dependencies": {
     "drizzle-orm": "^0.45.2",
