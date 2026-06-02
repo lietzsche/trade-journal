@@ -257,22 +257,17 @@ authApp.get('/portfolio', async (c) => {
 
       // 2. Trailing Stop Level (Lv = Math.floor(pnlPercent / 10))
       const level = Math.floor(pnlPercent / 10);
+      const displayLevel = Math.max(0, level);
 
-      // 3. Stop Loss line (-5% initial, or locked profit logic)
-      let stopLoss = 0;
-      if (pnlPercent < 0 || level <= 0) {
-        stopLoss = buyPrice * 0.95; // Initial -5% stop loss line
-      } else {
-        // Locked stop line based on current level achieved
-        stopLoss = buyPrice * (1 + (level - 1) * 0.1);
-      }
+      // 3. Stop Loss line (trails 5% below the newly achieved 10%-profit milestone)
+      const stopLoss = buyPrice * (1 + displayLevel * 0.1) * 0.95;
 
       // 4. Next Target Price
       let nextTarget = 0;
       if (pnlPercent < 0) {
         nextTarget = buyPrice; // Goal is break-even
       } else {
-        nextTarget = buyPrice * (1 + (level + 1) * 0.1);
+        nextTarget = buyPrice * (1 + (displayLevel + 1) * 0.1);
       }
 
       const unrealizedPnL = (currentPrice - buyPrice) * item.quantity;
@@ -598,12 +593,8 @@ authApp.get('/dashboard', async (c) => {
     holdings.forEach((item: any) => {
       const pnlPercent = ((item.currentPrice - item.buyPrice) / item.buyPrice) * 100;
       const level = Math.floor(pnlPercent / 10);
-      let stopLoss = 0;
-      if (pnlPercent < 0 || level <= 0) {
-        stopLoss = item.buyPrice * 0.95;
-      } else {
-        stopLoss = item.buyPrice * (1 + (level - 1) * 0.1);
-      }
+      const displayLevel = Math.max(0, level);
+      const stopLoss = item.buyPrice * (1 + displayLevel * 0.1) * 0.95;
 
       // If current price is below stopLoss, trigger danger alert
       if (item.currentPrice <= stopLoss) {
