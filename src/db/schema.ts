@@ -20,6 +20,8 @@ export const portfolio = sqliteTable('portfolio', {
   quantity: real('quantity').notNull(),
   currentPrice: real('current_price').notNull(),
   currency: text('currency').$type<'KRW' | 'USD'>().default('KRW').notNull(),
+  trailingTargetPercent: real('trailing_target_percent').default(10).notNull(),
+  trailingStopPercent: real('trailing_stop_percent').default(5).notNull(),
   memo: text('memo'),
   updatedAt: text('updated_at').default(sql`CURRENT_TIMESTAMP`).notNull(),
 });

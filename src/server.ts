@@ -289,23 +289,27 @@ authApp.get('/portfolio', async (c) => {
     const portfolioWithCalculations = rawPortfolio.map((item: any) => {
       const buyPrice = item.buyPrice;
       const currentPrice = item.currentPrice;
+      const targetPercent = item.trailingTargetPercent ?? 10;
+      const stopPercent = item.trailingStopPercent ?? 5;
+      const targetFactor = targetPercent / 100;
+      const stopFactor = 1 - (stopPercent / 100);
 
       // 1. P&L %
       const pnlPercent = ((currentPrice - buyPrice) / buyPrice) * 100;
 
-      // 2. Trailing Stop Level (Lv = Math.floor(pnlPercent / 10))
-      const level = Math.floor(pnlPercent / 10);
+      // 2. Trailing Stop Level (Lv = Math.floor(pnlPercent / targetPercent))
+      const level = Math.floor(pnlPercent / targetPercent);
       const displayLevel = Math.max(0, level);
 
-      // 3. Stop Loss line (trails 5% below the newly achieved 10%-profit milestone)
-      const stopLoss = buyPrice * (1 + displayLevel * 0.1) * 0.95;
+      // 3. Stop Loss line (trails stopPercent% below the newly achieved targetPercent%-profit milestone)
+      const stopLoss = buyPrice * (1 + displayLevel * targetFactor) * stopFactor;
 
       // 4. Next Target Price
       let nextTarget = 0;
       if (pnlPercent < 0) {
         nextTarget = buyPrice; // Goal is break-even
       } else {
-        nextTarget = buyPrice * (1 + (displayLevel + 1) * 0.1);
+        nextTarget = buyPrice * (1 + (displayLevel + 1) * targetFactor);
       }
 
       const unrealizedPnL = (currentPrice - buyPrice) * item.quantity;
@@ -360,6 +364,46 @@ authApp.post('/portfolio/:id/price', async (c) => {
     return c.json({ success: true, message: '현재가가 수정되었습니다.' });
   } catch (err: any) {
     return c.json({ error: '현재가 수정 중 오류가 발생했습니다: ' + err.message }, 500);
+  }
+});
+
+// B-2. Update Trailing Stop Settings
+authApp.post('/portfolio/:id/settings', async (c) => {
+  const db = drizzle(c.env.DB, { schema });
+  const userId = c.get('userId');
+  const id = parseInt(c.req.param('id'));
+  const { trailingTargetPercent, trailingStopPercent } = await c.req.json();
+
+  if (trailingTargetPercent === undefined || isNaN(Number(trailingTargetPercent)) || Number(trailingTargetPercent) <= 0) {
+    return c.json({ error: '올바른 목표 상승 트리거 비율(%)을 입력해 주세요.' }, 400);
+  }
+  if (trailingStopPercent === undefined || isNaN(Number(trailingStopPercent)) || Number(trailingStopPercent) <= 0 || Number(trailingStopPercent) >= 100) {
+    return c.json({ error: '올바른 트레일링 스톱 비율(%)을 입력해 주세요.' }, 400);
+  }
+
+  try {
+    // Verify ownership
+    const [existing] = await db
+      .select()
+      .from(schema.portfolio)
+      .where(and(eq(schema.portfolio.id, id), eq(schema.portfolio.userId, userId)));
+
+    if (!existing) {
+      return c.json({ error: '설정하려는 자산을 찾을 수 없거나 권한이 없습니다.' }, 404);
+    }
+
+    await db
+      .update(schema.portfolio)
+      .set({
+        trailingTargetPercent: Number(trailingTargetPercent),
+        trailingStopPercent: Number(trailingStopPercent),
+        updatedAt: new Date().toISOString(),
+      })
+      .where(eq(schema.portfolio.id, id));
+
+    return c.json({ success: true, message: '트레일링 스톱 설정이 수정되었습니다.' });
+  } catch (err: any) {
+    return c.json({ error: '설정 수정 중 오류가 발생했습니다: ' + err.message }, 500);
   }
 });
 

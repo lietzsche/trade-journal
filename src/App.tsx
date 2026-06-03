@@ -61,6 +61,8 @@ interface PortfolioItem {
   quantity: number;
   currentPrice: number;
   currency: 'KRW' | 'USD';
+  trailingTargetPercent: number;
+  trailingStopPercent: number;
   memo?: string;
   updatedAt: string;
   pnlPercent: number;
@@ -139,6 +141,11 @@ export default function App() {
   // Inline edit state for current price
   const [editingPriceId, setEditingPriceId] = useState<number | null>(null);
   const [tempPriceValue, setTempPriceValue] = useState<string>('');
+
+  // Inline edit state for trailing stop settings
+  const [editingSettingsId, setEditingSettingsId] = useState<number | null>(null);
+  const [tempTargetValue, setTempTargetValue] = useState<string>('');
+  const [tempStopValue, setTempStopValue] = useState<string>('');
 
   // Transaction Filters state
   const [filterTicker, setFilterTicker] = useState('');
@@ -865,6 +872,44 @@ export default function App() {
   const handleStartEditing = (item: PortfolioItem) => {
     setEditingPriceId(item.id);
     setTempPriceValue(item.currentPrice.toString());
+  };
+
+  // Manual Trailing Stop Settings Update
+  const handleSaveSettings = async (portfolioId: number) => {
+    const numericTarget = parseFloat(tempTargetValue);
+    const numericStop = parseFloat(tempStopValue);
+
+    if (isNaN(numericTarget) || numericTarget <= 0) {
+      alert('올바른 목표 상승 트리거 비율(%)을 입력해주세요.');
+      return;
+    }
+    if (isNaN(numericStop) || numericStop <= 0 || numericStop >= 100) {
+      alert('올바른 트레일링 스톱 비율(%)을 입력해주세요.');
+      return;
+    }
+
+    try {
+      setActionLoading(true);
+      await fetchWithAuth(`/api/portfolio/${portfolioId}/settings`, {
+        method: 'POST',
+        body: JSON.stringify({
+          trailingTargetPercent: numericTarget,
+          trailingStopPercent: numericStop
+        }),
+      });
+      setEditingSettingsId(null);
+      await loadAllData();
+    } catch (err: any) {
+      alert(err.message);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleStartEditingSettings = (item: PortfolioItem) => {
+    setEditingSettingsId(item.id);
+    setTempTargetValue(item.trailingTargetPercent.toString());
+    setTempStopValue(item.trailingStopPercent.toString());
   };
 
   // Render Login & Signup Form (Stunning Premium Glassmorphic Split-Screen Interface)
@@ -1677,6 +1722,7 @@ export default function App() {
                       <th className="py-4 px-6 text-right">평가 금액</th>
                       <th className="py-4 px-6 text-right">평가 손익 (%)</th>
                       <th className="py-4 px-6 text-center">도달 레벨</th>
+                      <th className="py-4 px-6 text-center">전략 (트리거/스톱)</th>
                       <th className="py-4 px-6 text-right text-rose-500">익절/손절가</th>
                       <th className="py-4 px-6 text-right text-indigo-500">차기 목표가</th>
                       <th className="py-4 px-6">메모</th>
@@ -1775,6 +1821,63 @@ export default function App() {
                             </span>
                           </td>
 
+                          {/* Trailing Stop custom settings cell */}
+                          <td className="py-4 px-6 text-center">
+                            {editingSettingsId === item.id ? (
+                              <div className="flex items-center justify-center gap-1">
+                                <input
+                                  type="number"
+                                  value={tempTargetValue}
+                                  onChange={(e) => setTempTargetValue(e.target.value)}
+                                  className="w-10 bg-white dark:bg-slate-900 border border-indigo-500 rounded px-1 py-0.5 text-center text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                  placeholder="트리거"
+                                  autoFocus
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') handleSaveSettings(item.id);
+                                    if (e.key === 'Escape') setEditingSettingsId(null);
+                                  }}
+                                />
+                                <span className="text-slate-400 text-[10px]">%</span>
+                                <span className="text-slate-400 text-[10px]">/</span>
+                                <input
+                                  type="number"
+                                  value={tempStopValue}
+                                  onChange={(e) => setTempStopValue(e.target.value)}
+                                  className="w-10 bg-white dark:bg-slate-900 border border-indigo-500 rounded px-1 py-0.5 text-center text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                  placeholder="스톱"
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') handleSaveSettings(item.id);
+                                    if (e.key === 'Escape') setEditingSettingsId(null);
+                                  }}
+                                />
+                                <span className="text-slate-400 text-[10px]">%</span>
+                                <button
+                                  onClick={() => handleSaveSettings(item.id)}
+                                  className="bg-indigo-600 hover:bg-indigo-700 text-white px-1.5 py-0.5 rounded text-[10px] ml-1 font-bold cursor-pointer"
+                                >
+                                  저장
+                                </button>
+                                <button
+                                  onClick={() => setEditingSettingsId(null)}
+                                  className="bg-slate-200 dark:bg-slate-800 text-slate-500 dark:text-slate-300 px-1.5 py-0.5 rounded text-[10px] cursor-pointer"
+                                >
+                                  취소
+                                </button>
+                              </div>
+                            ) : (
+                              <div className="flex items-center justify-center gap-1 group">
+                                <span className="font-semibold">{item.trailingTargetPercent}% / {item.trailingStopPercent}%</span>
+                                <button
+                                  onClick={() => handleStartEditingSettings(item)}
+                                  className="text-slate-400 hover:text-indigo-500 p-1 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                                  title="전략 설정 수정"
+                                >
+                                  <Edit3 className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            )}
+                          </td>
+
                           {/* Stop Loss (If dynamic status warning is below target) */}
                           <td className="py-4 px-6 text-right font-bold font-mono">
                             <span className={item.currentPrice <= item.stopLoss ? 'text-rose-500 animate-pulse' : 'text-rose-500 dark:text-rose-400'}>
@@ -1862,8 +1965,8 @@ export default function App() {
                         </div>
                       </div>
 
-                      {/* Stop Loss Alert and Current Price editable card details */}
-                      <div className="flex items-center justify-between gap-4 pt-1">
+                      {/* Stop Loss Alert and Current Price / Settings editors */}
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-3 border-t border-slate-200/40 dark:border-slate-800/40">
                         <div>
                           <div className="text-[10px] text-rose-500 font-bold mb-0.5">손절선 (Stop Loss)</div>
                           <div className="font-mono font-extrabold text-rose-500">
@@ -1874,43 +1977,98 @@ export default function App() {
                           )}
                         </div>
 
-                        {/* Interactive Current Price editor */}
-                        <div className="flex items-center gap-1.5">
-                          {editingPriceId === item.id ? (
-                            <div className="flex items-center gap-1">
-                              <input
-                                type="number"
-                                value={tempPriceValue}
-                                onChange={(e) => setTempPriceValue(e.target.value)}
-                                className="w-20 bg-white dark:bg-slate-900 border border-indigo-500 rounded-lg px-2 py-1 text-right text-xs focus:outline-none"
-                                autoFocus
-                                onKeyDown={(e) => {
-                                  if (e.key === 'Enter') handleSavePrice(item.id);
-                                  if (e.key === 'Escape') setEditingPriceId(null);
-                                }}
-                              />
-                              <button
-                                onClick={() => handleSavePrice(item.id)}
-                                className="bg-indigo-600 hover:bg-indigo-700 text-white px-2.5 py-1 rounded-lg text-[10px] font-bold"
-                              >
-                                저장
-                              </button>
-                            </div>
-                          ) : (
-                            <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 py-1.5 px-3 rounded-xl hover:border-indigo-500 transition-colors">
-                              <div className="text-right">
-                                <div className="text-[9px] text-slate-500 font-bold">현재가</div>
-                                <span className="font-mono text-xs font-bold text-slate-800 dark:text-slate-200">{formatCurrency(item.currentPrice, item.currency)}</span>
+                        <div className="flex flex-wrap gap-2 items-center justify-start sm:justify-end">
+                          {/* Interactive Current Price editor */}
+                          <div>
+                            {editingPriceId === item.id ? (
+                              <div className="flex items-center gap-1">
+                                <input
+                                  type="number"
+                                  value={tempPriceValue}
+                                  onChange={(e) => setTempPriceValue(e.target.value)}
+                                  className="w-20 bg-white dark:bg-slate-900 border border-indigo-500 rounded-lg px-2 py-1 text-right text-xs focus:outline-none"
+                                  autoFocus
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') handleSavePrice(item.id);
+                                    if (e.key === 'Escape') setEditingPriceId(null);
+                                  }}
+                                />
+                                <button
+                                  onClick={() => handleSavePrice(item.id)}
+                                  className="bg-indigo-600 hover:bg-indigo-700 text-white px-2.5 py-1 rounded-lg text-[10px] font-bold cursor-pointer"
+                                >
+                                  저장
+                                </button>
                               </div>
-                              <button
-                                onClick={() => handleStartEditing(item)}
-                                className="text-slate-500 hover:text-indigo-500 p-0.5"
-                                title="현재가 수정"
-                              >
-                                <Edit3 className="w-3.5 h-3.5" />
-                              </button>
-                            </div>
-                          )}
+                            ) : (
+                              <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 py-1.5 px-3 rounded-xl hover:border-indigo-500 transition-colors">
+                                <div className="text-right">
+                                  <div className="text-[9px] text-slate-500 font-bold">현재가</div>
+                                  <span className="font-mono text-xs font-bold text-slate-800 dark:text-slate-200">{formatCurrency(item.currentPrice, item.currency)}</span>
+                                </div>
+                                <button
+                                  onClick={() => handleStartEditing(item)}
+                                  className="text-slate-500 hover:text-indigo-500 p-0.5 cursor-pointer"
+                                  title="현재가 수정"
+                                >
+                                  <Edit3 className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Interactive Trailing Stop Settings editor */}
+                          <div>
+                            {editingSettingsId === item.id ? (
+                              <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 py-1 px-2 rounded-xl">
+                                <input
+                                  type="number"
+                                  value={tempTargetValue}
+                                  onChange={(e) => setTempTargetValue(e.target.value)}
+                                  className="w-10 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md py-0.5 text-center text-[10px] focus:outline-none"
+                                  placeholder="트리거"
+                                  autoFocus
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') handleSaveSettings(item.id);
+                                    if (e.key === 'Escape') setEditingSettingsId(null);
+                                  }}
+                                />
+                                <span className="text-[9px] text-slate-400">%</span>
+                                <input
+                                  type="number"
+                                  value={tempStopValue}
+                                  onChange={(e) => setTempStopValue(e.target.value)}
+                                  className="w-10 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md py-0.5 text-center text-[10px] focus:outline-none"
+                                  placeholder="스톱"
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') handleSaveSettings(item.id);
+                                    if (e.key === 'Escape') setEditingSettingsId(null);
+                                  }}
+                                />
+                                <span className="text-[9px] text-slate-400">%</span>
+                                <button
+                                  onClick={() => handleSaveSettings(item.id)}
+                                  className="bg-indigo-600 hover:bg-indigo-700 text-white px-2 py-0.5 rounded-md text-[9px] font-bold cursor-pointer ml-1"
+                                >
+                                  저장
+                                </button>
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 py-1.5 px-3 rounded-xl hover:border-indigo-500 transition-colors">
+                                <div className="text-right">
+                                  <div className="text-[9px] text-slate-500 font-bold">전략 (트리거/스톱)</div>
+                                  <span className="text-xs font-bold text-slate-800 dark:text-slate-200">{item.trailingTargetPercent}% / {item.trailingStopPercent}%</span>
+                                </div>
+                                <button
+                                  onClick={() => handleStartEditingSettings(item)}
+                                  className="text-slate-500 hover:text-indigo-500 p-0.5 cursor-pointer"
+                                  title="전략 수정"
+                                >
+                                  <Edit3 className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </div>
 
