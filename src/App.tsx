@@ -1578,7 +1578,7 @@ export default function App() {
         <div className="bg-slate-200/50 dark:bg-slate-900/60 p-1 rounded-2xl flex border border-slate-300/30 dark:border-slate-800/80 w-full relative">
           <button
             onClick={() => setActiveTab('dashboard')}
-            className={`flex-1 text-center py-2.5 sm:py-3 text-xs sm:text-sm font-bold rounded-xl transition-all duration-300 relative z-10 cursor-pointer flex items-center justify-center gap-1.5 sm:gap-2 ${
+            className={`flex-1 text-center py-2.5 sm:py-3 text-xs sm:text-sm font-bold rounded-xl relative z-10 cursor-pointer flex items-center justify-center gap-1.5 sm:gap-2 ${
               activeTab === 'dashboard'
                 ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm border border-slate-200/50 dark:border-slate-700/50 font-bold'
                 : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 font-semibold'
@@ -1590,7 +1590,7 @@ export default function App() {
           </button>
           <button
             onClick={() => setActiveTab('portfolio')}
-            className={`flex-1 text-center py-2.5 sm:py-3 text-xs sm:text-sm font-bold rounded-xl transition-all duration-300 relative z-10 cursor-pointer flex items-center justify-center gap-1.5 sm:gap-2 ${
+            className={`flex-1 text-center py-2.5 sm:py-3 text-xs sm:text-sm font-bold rounded-xl relative z-10 cursor-pointer flex items-center justify-center gap-1.5 sm:gap-2 ${
               activeTab === 'portfolio'
                 ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm border border-slate-200/50 dark:border-slate-700/50 font-bold'
                 : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 font-semibold'
@@ -1602,7 +1602,7 @@ export default function App() {
           </button>
           <button
             onClick={() => setActiveTab('transactions')}
-            className={`flex-1 text-center py-2.5 sm:py-3 text-xs sm:text-sm font-bold rounded-xl transition-all duration-300 relative z-10 cursor-pointer flex items-center justify-center gap-1.5 sm:gap-2 ${
+            className={`flex-1 text-center py-2.5 sm:py-3 text-xs sm:text-sm font-bold rounded-xl relative z-10 cursor-pointer flex items-center justify-center gap-1.5 sm:gap-2 ${
               activeTab === 'transactions'
                 ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm border border-slate-200/50 dark:border-slate-700/50 font-bold'
                 : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 font-semibold'
@@ -1614,7 +1614,7 @@ export default function App() {
           </button>
           <button
             onClick={() => setActiveTab('calculator')}
-            className={`flex-1 text-center py-2.5 sm:py-3 text-xs sm:text-sm font-bold rounded-xl transition-all duration-300 relative z-10 cursor-pointer flex items-center justify-center gap-1.5 sm:gap-2 ${
+            className={`flex-1 text-center py-2.5 sm:py-3 text-xs sm:text-sm font-bold rounded-xl relative z-10 cursor-pointer flex items-center justify-center gap-1.5 sm:gap-2 ${
               activeTab === 'calculator'
                 ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm border border-slate-200/50 dark:border-slate-700/50 font-bold'
                 : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 font-semibold'
@@ -2861,7 +2861,7 @@ export default function App() {
 
         {activeTab === 'calculator' && (
           <div className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start animate-in fade-in slide-in-from-bottom-4 duration-300">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
               
               {/* Left Col: Inputs */}
               <div className="glass-panel rounded-3xl p-6 shadow-sm border border-slate-200 dark:border-slate-800/80 space-y-6">
@@ -3131,7 +3131,7 @@ export default function App() {
 
                       {/* Simulation Guideline Calculator Card */}
                       {baseVal > 0 && (
-                        <div className="glass-panel rounded-3xl p-6 shadow-sm border border-slate-200 dark:border-slate-800/80 animate-in fade-in duration-300">
+                        <div className="glass-panel rounded-3xl p-6 shadow-sm border border-slate-200 dark:border-slate-800/80">
                           <h3 className="text-base font-bold mb-4 flex items-center gap-2">
                             <Target className="w-5 h-5 text-indigo-500" />
                             <span>진입가 기준 금액 가이드라인</span>
@@ -3189,7 +3189,7 @@ export default function App() {
           </div>
 
           {/* Bottom Section: Calculation History (Full width) */}
-          <div className="glass-panel rounded-3xl p-6 shadow-sm border border-slate-200 dark:border-slate-800/80 animate-in fade-in duration-300 space-y-4">
+          <div className="glass-panel rounded-3xl p-6 shadow-sm border border-slate-200 dark:border-slate-800/80 space-y-4">
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-base font-bold flex items-center gap-2">
