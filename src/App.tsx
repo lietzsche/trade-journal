@@ -3270,7 +3270,7 @@ export default function App() {
                 </div>
 
                 {/* Mobile stacked list view (Visible on mobile, hidden on desktop, no horizontal scroll) */}
-                <div className="block md:hidden divide-y divide-slate-100 dark:divide-slate-800/40">
+                <div className="block md:hidden space-y-3">
                   {calcHistory.map((item) => {
                     const isEditing = editingCalcId === item.id;
                     
@@ -3285,7 +3285,12 @@ export default function App() {
 
                     if (isEditing) {
                       return (
-                        <div key={item.id} className="p-4 space-y-3 bg-indigo-500/5 dark:bg-indigo-500/10 rounded-2xl animate-in fade-in duration-200">
+                        <div key={item.id} className="p-4 bg-indigo-50/40 dark:bg-indigo-950/10 border border-indigo-100/80 dark:border-indigo-900/30 rounded-2xl space-y-3.5 animate-in fade-in duration-200">
+                          <div className="flex items-center gap-2 border-b border-indigo-100/50 dark:border-indigo-900/20 pb-2">
+                            <span className="text-xs font-extrabold text-indigo-600 dark:text-indigo-400">히스토리 수정</span>
+                            <span className="text-[10px] text-slate-500 dark:text-slate-400">({item.ticker})</span>
+                          </div>
+                          
                           <div className="grid grid-cols-2 gap-3 text-xs">
                             <div>
                               <label className="block text-[10px] text-slate-400 font-bold mb-1">종목 티커</label>
@@ -3293,7 +3298,7 @@ export default function App() {
                                 type="text"
                                 value={editCalcTicker}
                                 onChange={(e) => setEditCalcTicker(e.target.value.toUpperCase())}
-                                className="w-full bg-white dark:bg-slate-900 border border-slate-250 dark:border-slate-850 rounded-xl px-3 py-1.5 font-bold text-slate-800 dark:text-slate-100 focus:outline-none focus:border-indigo-500"
+                                className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/80 rounded-xl px-3 py-1.5 font-bold text-slate-800 dark:text-slate-100 focus:outline-none focus:border-indigo-500 transition-all"
                               />
                             </div>
                             <div>
@@ -3301,7 +3306,7 @@ export default function App() {
                               <select
                                 value={editCalcPeriod}
                                 onChange={(e) => setEditCalcPeriod(e.target.value as any)}
-                                className="w-full bg-white dark:bg-slate-900 border border-slate-250 dark:border-slate-850 rounded-xl px-3 py-1.5 font-semibold text-slate-800 dark:text-slate-100 focus:outline-none focus:border-indigo-500"
+                                className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/80 rounded-xl px-3 py-1.5 font-semibold text-slate-800 dark:text-slate-100 focus:outline-none focus:border-indigo-500 transition-all"
                               >
                                 <option value="week">1주일 (5일)</option>
                                 <option value="month">1개월 (20일)</option>
@@ -3314,7 +3319,7 @@ export default function App() {
                                 type="number"
                                 value={editCalcBasePrice}
                                 onChange={(e) => setEditCalcBasePrice(e.target.value)}
-                                className="w-full bg-white dark:bg-slate-900 border border-slate-250 dark:border-slate-850 rounded-xl px-3 py-1.5 font-semibold text-right text-slate-800 dark:text-slate-100 focus:outline-none focus:border-indigo-500"
+                                className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/80 rounded-xl px-3 py-1.5 font-semibold text-right text-slate-800 dark:text-slate-100 focus:outline-none focus:border-indigo-500 transition-all"
                               />
                             </div>
                             <div>
@@ -3322,7 +3327,7 @@ export default function App() {
                               <select
                                 value={editCalcRiskReward}
                                 onChange={(e) => setEditCalcRiskReward(parseFloat(e.target.value))}
-                                className="w-full bg-white dark:bg-slate-900 border border-slate-250 dark:border-slate-850 rounded-xl px-3 py-1.5 font-semibold text-slate-800 dark:text-slate-100 focus:outline-none focus:border-indigo-500"
+                                className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/80 rounded-xl px-3 py-1.5 font-semibold text-slate-800 dark:text-slate-100 focus:outline-none focus:border-indigo-500 transition-all"
                               >
                                 <option value={1.5}>1.5배</option>
                                 <option value={2.0}>2.0배</option>
@@ -3330,38 +3335,38 @@ export default function App() {
                               </select>
                             </div>
                             <div>
-                              <label className="block text-[10px] text-slate-400 font-bold mb-1">기간 내 최고가</label>
+                              <label className="block text-[10px] text-slate-400 font-bold mb-1">최고가 (기간)</label>
                               <input
                                 type="number"
                                 value={editCalcHighPrice}
                                 onChange={(e) => setEditCalcHighPrice(e.target.value)}
-                                className="w-full bg-white dark:bg-slate-900 border border-slate-250 dark:border-slate-850 rounded-xl px-3 py-1.5 font-semibold text-right text-slate-800 dark:text-slate-100 focus:outline-none focus:border-indigo-500"
+                                className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/80 rounded-xl px-3 py-1.5 font-semibold text-right text-slate-800 dark:text-slate-100 focus:outline-none focus:border-indigo-500 transition-all"
                               />
                             </div>
                             <div>
-                              <label className="block text-[10px] text-slate-400 font-bold mb-1">기간 내 최저가</label>
+                              <label className="block text-[10px] text-slate-400 font-bold mb-1">최저가 (기간)</label>
                               <input
                                 type="number"
                                 value={editCalcLowPrice}
                                 onChange={(e) => setEditCalcLowPrice(e.target.value)}
-                                className="w-full bg-white dark:bg-slate-900 border border-slate-250 dark:border-slate-850 rounded-xl px-3 py-1.5 font-semibold text-right text-slate-800 dark:text-slate-100 focus:outline-none focus:border-indigo-500"
+                                className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/80 rounded-xl px-3 py-1.5 font-semibold text-right text-slate-800 dark:text-slate-100 focus:outline-none focus:border-indigo-500 transition-all"
                               />
                             </div>
                           </div>
                           
-                          <div className="flex gap-2 justify-end pt-2">
+                          <div className="flex gap-2 justify-end pt-2 border-t border-indigo-100/50 dark:border-indigo-900/20">
                             <button
                               onClick={() => handleSaveEditCalcHistory(item.id)}
-                              className="bg-indigo-500 hover:bg-indigo-650 text-white px-4 py-2 rounded-xl font-bold transition-all flex items-center gap-1.5 shadow-sm text-xs cursor-pointer"
+                              className="bg-indigo-500 hover:bg-indigo-600 text-white px-3.5 py-1.5 rounded-xl font-bold transition-all flex items-center gap-1.5 shadow-sm text-xs cursor-pointer"
                             >
-                              <Check className="w-4 h-4" />
-                              <span>수정 저장</span>
+                              <Check className="w-3.5 h-3.5" />
+                              <span>저장</span>
                             </button>
                             <button
                               onClick={() => setEditingCalcId(null)}
-                              className="bg-slate-200 dark:bg-slate-800 text-slate-650 dark:text-slate-350 px-4 py-2 rounded-xl font-bold hover:bg-slate-300 dark:hover:bg-slate-700 transition-all flex items-center gap-1.5 text-xs cursor-pointer"
+                              className="bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 px-3.5 py-1.5 rounded-xl font-bold hover:bg-slate-300 dark:hover:bg-slate-700 transition-all flex items-center gap-1.5 text-xs cursor-pointer"
                             >
-                              <X className="w-4 h-4" />
+                              <X className="w-3.5 h-3.5" />
                               <span>취소</span>
                             </button>
                           </div>
@@ -3370,64 +3375,78 @@ export default function App() {
                     }
 
                     return (
-                      <div key={item.id} className="p-4 space-y-3 hover:bg-slate-100/30 dark:hover:bg-slate-900/10 transition-colors">
-                        {/* Header: Ticker, Period */}
+                      <div key={item.id} className="p-4 bg-white dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800/60 rounded-2xl shadow-sm space-y-3.5 hover:border-slate-200 dark:hover:border-slate-700/80 transition-all duration-200">
+                        {/* Header: Ticker, Period, RiskReward and actions */}
                         <div className="flex items-center justify-between">
-                          <span className="text-sm font-extrabold text-slate-900 dark:text-slate-100">{item.ticker}</span>
-                          <span className="text-[10px] bg-slate-200/50 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400 px-2 py-0.5 rounded-lg font-bold">
-                            {periodStr}
-                          </span>
-                        </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-base font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">{item.ticker}</span>
+                            <span className="text-[10px] bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 px-2 py-0.5 rounded-full font-bold">
+                              {periodStr}
+                            </span>
+                            <span className="text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 px-2 py-0.5 rounded-full font-semibold">
+                              {item.riskReward.toFixed(1)}배
+                            </span>
+                          </div>
 
-                        {/* Details grid */}
-                        <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-[11px] text-slate-500 font-semibold border-b border-slate-200/30 dark:border-slate-800/20 pb-2">
-                          <div className="flex justify-between">
-                            <span>기준 진입가:</span>
-                            <span className="font-mono font-bold text-slate-750 dark:text-slate-300">{item.basePrice.toLocaleString()}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span>변동폭 (손익비):</span>
-                            <span className="font-mono font-bold text-indigo-500 dark:text-indigo-400">{vol.toFixed(1)}% ({item.riskReward.toFixed(1)}배)</span>
-                          </div>
-                          <div className="flex justify-between col-span-2">
-                            <span>최고가 / 최저가:</span>
-                            <span className="font-mono font-medium text-slate-600 dark:text-slate-400">{item.highPrice.toLocaleString()} / {item.lowPrice.toLocaleString()}</span>
-                          </div>
-                        </div>
-
-                        {/* Volatility Output Stop/Target Details */}
-                        <div className="flex items-center justify-between pt-1">
-                          <div className="space-y-1">
-                            <div className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">추천 익절/손절가 및 트리거</div>
-                            <div className="flex items-center gap-3">
-                              <div>
-                                <span className="text-rose-500 font-bold">-{item.recStop}%</span>
-                                <span className="font-mono font-extrabold text-rose-500 ml-1 text-xs">{Math.round(stopP).toLocaleString()}</span>
-                              </div>
-                              <span className="text-slate-300 dark:text-slate-800">|</span>
-                              <div>
-                                <span className="text-indigo-405 font-bold">+{item.recTarget}%</span>
-                                <span className="font-mono font-extrabold text-indigo-405 ml-1 text-xs">{Math.round(targetP).toLocaleString()}</span>
-                              </div>
-                            </div>
-                          </div>
-                          
                           {/* Action buttons */}
-                          <div className="flex items-center gap-1.5">
+                          <div className="flex items-center gap-1">
                             <button
                               onClick={() => handleStartEditCalcHistory(item)}
-                              className="p-2 text-slate-400 hover:text-indigo-500 dark:hover:text-indigo-400 transition-colors cursor-pointer rounded-lg bg-slate-100/50 dark:bg-slate-900/60"
+                              className="p-1.5 text-slate-400 hover:text-indigo-500 dark:hover:text-indigo-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all rounded-lg cursor-pointer"
                               title="수정"
                             >
                               <Edit2 className="w-3.5 h-3.5" />
                             </button>
                             <button
                               onClick={() => handleDeleteCalcHistory(item.id)}
-                              className="p-2 text-slate-400 hover:text-rose-500 dark:hover:text-rose-450 transition-colors cursor-pointer rounded-lg bg-slate-100/50 dark:bg-slate-900/60"
+                              className="p-1.5 text-slate-400 hover:text-rose-500 dark:hover:text-rose-450 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all rounded-lg cursor-pointer"
                               title="삭제"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
+                          </div>
+                        </div>
+
+                        {/* Mid detail grid */}
+                        <div className="grid grid-cols-3 gap-2 py-2.5 border-y border-slate-100/80 dark:border-slate-800/40 text-center">
+                          <div className="space-y-0.5">
+                            <span className="block text-[9px] text-slate-400 font-bold uppercase tracking-wider">기준 진입가</span>
+                            <span className="font-mono text-xs font-bold text-slate-750 dark:text-slate-200">{item.basePrice.toLocaleString()}</span>
+                          </div>
+                          <div className="space-y-0.5 border-x border-slate-100/80 dark:border-slate-800/40 px-1">
+                            <span className="block text-[9px] text-slate-400 font-bold uppercase tracking-wider">고가 / 저가</span>
+                            <span className="font-mono text-[9px] font-semibold text-slate-600 dark:text-slate-400 leading-tight block">
+                              {item.highPrice.toLocaleString()}<br/>{item.lowPrice.toLocaleString()}
+                            </span>
+                          </div>
+                          <div className="space-y-0.5">
+                            <span className="block text-[9px] text-slate-400 font-bold uppercase tracking-wider">변동성 (Vol)</span>
+                            <span className="font-mono text-xs font-bold text-indigo-500 dark:text-indigo-400">±{vol.toFixed(1)}%</span>
+                          </div>
+                        </div>
+
+                        {/* Bottom: Recommendation Targets (HTS style red/green pill layout) */}
+                        <div className="grid grid-cols-2 gap-2 pt-0.5">
+                          {/* Recommended Stop-loss */}
+                          <div className="bg-rose-50/50 dark:bg-rose-950/15 border border-rose-100/30 dark:border-rose-900/20 rounded-xl p-2 text-center">
+                            <div className="flex justify-center items-center gap-1 mb-0.5">
+                              <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+                              <span className="text-[10px] text-rose-600 dark:text-rose-400 font-bold">추천 손절 (-{item.recStop}%)</span>
+                            </div>
+                            <span className="font-mono text-sm font-extrabold text-rose-600 dark:text-rose-400">
+                              {Math.round(stopP).toLocaleString()}
+                            </span>
+                          </div>
+                          
+                          {/* Recommended Target */}
+                          <div className="bg-emerald-50/50 dark:bg-emerald-950/15 border border-emerald-100/30 dark:border-emerald-900/20 rounded-xl p-2 text-center">
+                            <div className="flex justify-center items-center gap-1 mb-0.5">
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                              <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">추천 목표 (+{item.recTarget}%)</span>
+                            </div>
+                            <span className="font-mono text-sm font-extrabold text-emerald-600 dark:text-emerald-400">
+                              {Math.round(targetP).toLocaleString()}
+                            </span>
                           </div>
                         </div>
                       </div>
