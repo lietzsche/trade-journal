@@ -113,7 +113,7 @@ export default function App() {
   const [showPassword, setShowPassword] = useState(false);
 
   // Application UI states
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'portfolio' | 'transactions'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'portfolio' | 'transactions' | 'calculator'>('dashboard');
   const [darkMode, setDarkMode] = useState<boolean>(
     localStorage.getItem('theme') === 'dark' ||
     (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)
@@ -146,6 +146,13 @@ export default function App() {
   const [editingSettingsId, setEditingSettingsId] = useState<number | null>(null);
   const [tempTargetValue, setTempTargetValue] = useState<string>('');
   const [tempStopValue, setTempStopValue] = useState<string>('');
+
+  // Volatility Calculator state
+  const [calcPeriod, setCalcPeriod] = useState<'week' | 'month' | 'quarter'>('month');
+  const [calcBasePrice, setCalcBasePrice] = useState<string>('');
+  const [calcHighPrice, setCalcHighPrice] = useState<string>('');
+  const [calcLowPrice, setCalcLowPrice] = useState<string>('');
+  const [calcRiskReward, setCalcRiskReward] = useState<number>(2.0);
 
   // Transaction Filters state
   const [filterTicker, setFilterTicker] = useState('');
@@ -1315,6 +1322,18 @@ export default function App() {
             <FileText className="w-4 h-4" />
             <span className="hidden sm:inline">매매 거래 일지</span>
             <span className="sm:hidden">거래일지</span>
+          </button>
+          <button
+            onClick={() => setActiveTab('calculator')}
+            className={`flex-1 text-center py-2.5 sm:py-3 text-xs sm:text-sm font-bold rounded-xl transition-all duration-300 relative z-10 cursor-pointer flex items-center justify-center gap-1.5 sm:gap-2 ${
+              activeTab === 'calculator'
+                ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm border border-slate-200/50 dark:border-slate-700/50 font-bold'
+                : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 font-semibold'
+            }`}
+          >
+            <FileSpreadsheet className="w-4 h-4" />
+            <span className="hidden sm:inline">변동성 전략 계산기</span>
+            <span className="sm:hidden">계산기</span>
           </button>
         </div>
       </div>
@@ -2539,6 +2558,310 @@ export default function App() {
                 </div>
               </div>
 
+            </div>
+
+          </div>
+        )}
+
+        {activeTab === 'calculator' && (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start animate-in fade-in slide-in-from-bottom-4 duration-300">
+            
+            {/* Left Col: Inputs */}
+            <div className="glass-panel rounded-3xl p-6 shadow-sm border border-slate-200 dark:border-slate-800/80 space-y-6">
+              <div>
+                <h2 className="text-base font-bold flex items-center gap-2">
+                  <FileSpreadsheet className="w-5 h-5 text-indigo-500" />
+                  <span>변동성 데이터 입력</span>
+                </h2>
+                <p className="text-xs text-slate-400 mt-1">HTS/MTS의 차트 정보를 입력해 분석을 진행합니다.</p>
+              </div>
+
+              <div className="space-y-4 text-xs">
+                {/* 1. Period Selection */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-400 mb-2">기준 분석 기간 *</label>
+                  <div className="bg-slate-200/50 dark:bg-slate-900/60 p-1 rounded-xl flex border border-slate-300/30 dark:border-slate-800/85">
+                    <button
+                      type="button"
+                      onClick={() => setCalcPeriod('week')}
+                      className={`flex-1 text-center py-2 text-[10px] font-bold rounded-lg transition-all cursor-pointer ${
+                        calcPeriod === 'week'
+                          ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm border border-slate-200/50 dark:border-slate-700/50'
+                          : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
+                      }`}
+                    >
+                      1주일 (5일)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setCalcPeriod('month')}
+                      className={`flex-1 text-center py-2 text-[10px] font-bold rounded-lg transition-all cursor-pointer ${
+                        calcPeriod === 'month'
+                          ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm border border-slate-200/50 dark:border-slate-700/50'
+                          : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
+                      }`}
+                    >
+                      1개월 (20일)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setCalcPeriod('quarter')}
+                      className={`flex-1 text-center py-2 text-[10px] font-bold rounded-lg transition-all cursor-pointer ${
+                        calcPeriod === 'quarter'
+                          ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm border border-slate-200/50 dark:border-slate-700/50'
+                          : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
+                      }`}
+                    >
+                      3개월 (60일)
+                    </button>
+                  </div>
+                  <p className="text-[10px] text-slate-400/80 mt-1.5 leading-relaxed">
+                    * 기간이 길어질수록 고가와 저가의 폭이 넓어지므로 연산 보정 계수가 작아집니다.
+                  </p>
+                </div>
+
+                {/* 2. Base Price */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-400 mb-1">매입 진입가 (기준 평단가) *</label>
+                  <input
+                    type="number"
+                    value={calcBasePrice}
+                    onChange={(e) => setCalcBasePrice(e.target.value)}
+                    placeholder="예: 70000"
+                    className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 focus:outline-none focus:border-indigo-500 transition-colors font-semibold"
+                  />
+                </div>
+
+                {/* 3. High / Low Price */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-400 mb-1">기간 내 최고가 *</label>
+                    <input
+                      type="number"
+                      value={calcHighPrice}
+                      onChange={(e) => setCalcHighPrice(e.target.value)}
+                      placeholder="예: 78000"
+                      className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 focus:outline-none focus:border-indigo-500 transition-colors font-semibold"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-400 mb-1">기간 내 최저가 *</label>
+                    <input
+                      type="number"
+                      value={calcLowPrice}
+                      onChange={(e) => setCalcLowPrice(e.target.value)}
+                      placeholder="예: 68000"
+                      className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 focus:outline-none focus:border-indigo-500 transition-colors font-semibold"
+                    />
+                  </div>
+                </div>
+
+                {/* 4. Risk / Reward Multiplier */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-400 mb-2">목표 손익비 (수익/손실 비율) *</label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {[1.5, 2.0, 2.5].map((rr) => (
+                      <button
+                        key={rr}
+                        type="button"
+                        onClick={() => setCalcRiskReward(rr)}
+                        className={`py-2 px-3 rounded-xl font-bold border transition-all text-center cursor-pointer ${
+                          calcRiskReward === rr
+                            ? 'bg-indigo-500/10 border-indigo-500 text-indigo-600 dark:text-indigo-400'
+                            : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-500'
+                        }`}
+                      >
+                        {rr.toFixed(1)}배
+                      </button>
+                    ))}
+                  </div>
+                  <p className="text-[10px] text-slate-400/80 mt-1.5 leading-relaxed">
+                    * 예: 손익비 2.0배 지정 시, 추천 손절폭이 5%일 때 목표 상승 트리거는 10%로 유도됩니다.
+                  </p>
+                </div>
+
+                {/* Reset button */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCalcBasePrice('');
+                    setCalcHighPrice('');
+                    setCalcLowPrice('');
+                    setCalcRiskReward(2.0);
+                  }}
+                  className="w-full border border-slate-200 dark:border-slate-800 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-900/60 font-bold py-2.5 rounded-xl transition-all cursor-pointer text-xs"
+                >
+                  입력 초기화
+                </button>
+              </div>
+            </div>
+
+            {/* Right Col: Reports (Span 2) */}
+            <div className="lg:col-span-2 space-y-6">
+              {calcHighPrice && calcLowPrice && parseFloat(calcHighPrice) > parseFloat(calcLowPrice) ? (
+                (() => {
+                  const baseVal = parseFloat(calcBasePrice) || 0;
+                  const highVal = parseFloat(calcHighPrice);
+                  const lowVal = parseFloat(calcLowPrice);
+                  
+                  // Volatility range percent
+                  const volatility = ((highVal - lowVal) / lowVal) * 100;
+                  
+                  // Period coefficient
+                  let periodCoeff = 0.45;
+                  let periodLabel = '1개월 (20일)';
+                  if (calcPeriod === 'week') {
+                    periodCoeff = 0.60;
+                    periodLabel = '1주일 (5일)';
+                  } else if (calcPeriod === 'quarter') {
+                    periodCoeff = 0.35;
+                    periodLabel = '3개월 (60일)';
+                  }
+
+                  // Calculated custom parameters (rounded)
+                  const recStop = Math.max(1, Math.min(30, Math.round(volatility * periodCoeff)));
+                  const recTarget = Math.max(1, Math.min(50, Math.round(recStop * calcRiskReward)));
+                  
+                  // Real simulated prices
+                  const stopPrice = baseVal > 0 ? baseVal * (1 - recStop / 100) : 0;
+                  const targetPrice = baseVal > 0 ? baseVal * (1 + recTarget / 100) : 0;
+
+                  // Gauge color mapping based on volatility class
+                  let gaugeColor = 'bg-emerald-500';
+                  let textColor = 'text-emerald-500';
+                  let volatilityDesc = '저변동성 (우량 자산)';
+                  
+                  if (volatility >= 30) {
+                    gaugeColor = 'bg-rose-500';
+                    textColor = 'text-rose-500';
+                    volatilityDesc = '극단적 변동성 (가상자산/잡주)';
+                  } else if (volatility >= 15) {
+                    gaugeColor = 'bg-amber-500';
+                    textColor = 'text-amber-500';
+                    volatilityDesc = '고변동성 (테마주/소형주)';
+                  } else if (volatility >= 8) {
+                    gaugeColor = 'bg-indigo-500';
+                    textColor = 'text-indigo-500';
+                    volatilityDesc = '보통 변동성 (일반 성장주)';
+                  }
+
+                  return (
+                    <div className="space-y-6">
+                      
+                      {/* Analysis Card */}
+                      <div className="glass-panel glow-card rounded-3xl p-6 shadow-md border border-slate-200 dark:border-slate-800/80 transition-all duration-300">
+                        <h3 className="text-base font-bold mb-6 flex items-center gap-2">
+                          <Percent className="w-5 h-5 text-indigo-500" />
+                          <span>주가 변동성 분석 리포트</span>
+                        </h3>
+
+                        {/* Volatility Gauge */}
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between text-xs font-bold">
+                            <span className="text-slate-400">선택 기간 ({periodLabel}) 내 변동 폭</span>
+                            <span className={`${textColor} text-sm font-black`}>{volatility.toFixed(2)}%</span>
+                          </div>
+                          
+                          {/* Visual progress bar */}
+                          <div className="w-full bg-slate-200 dark:bg-slate-800/60 rounded-full h-3.5 overflow-hidden border border-slate-300/30 dark:border-slate-700/30 p-0.5">
+                            <div 
+                              className={`h-full rounded-full transition-all duration-500 ${gaugeColor}`}
+                              style={{ width: `${Math.min(100, (volatility / 40) * 100)}%` }}
+                            />
+                          </div>
+                          <div className="flex justify-between items-center text-[10px] text-slate-400/80 mt-1">
+                            <span className="font-semibold">자산 성향 판단: {volatilityDesc}</span>
+                            <span>(최대 40% 기준 게이지)</span>
+                          </div>
+                        </div>
+
+                        {/* Config Suggestion Boxes */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
+                          
+                          {/* Recommended Stop Percent Box */}
+                          <div className="bg-slate-100/40 dark:bg-slate-900/40 p-5 rounded-2xl border border-slate-200 dark:border-slate-800/60 relative overflow-hidden group hover:border-rose-500/20 transition-all">
+                            <div className="absolute top-[-20%] right-[-10%] w-20 h-20 bg-rose-500/5 rounded-full blur-xl pointer-events-none" />
+                            <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-2">추천 손절폭 (Recommended Stop %)</div>
+                            <div className="flex items-baseline gap-1">
+                              <span className="text-3xl font-extrabold text-rose-500">{recStop}</span>
+                              <span className="text-sm font-bold text-rose-500/80">%</span>
+                            </div>
+                            <p className="text-[10px] text-slate-400/80 mt-2 leading-normal">
+                              * 기간 변동성의 노이즈 버퍼 계수를 적용하여 주가의 자연스러운 후퇴 범위를 허용합니다.
+                            </p>
+                          </div>
+
+                          {/* Recommended Target Percent Box */}
+                          <div className="bg-slate-100/40 dark:bg-slate-900/40 p-5 rounded-2xl border border-slate-200/40 dark:border-slate-800/60 relative overflow-hidden group hover:border-indigo-500/20 transition-all">
+                            <div className="absolute top-[-20%] right-[-10%] w-20 h-20 bg-indigo-500/5 rounded-full blur-xl pointer-events-none" />
+                            <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-2">추천 트리거폭 (Recommended Target %)</div>
+                            <div className="flex items-baseline gap-1">
+                              <span className="text-3xl font-extrabold text-indigo-500">{recTarget}</span>
+                              <span className="text-sm font-bold text-indigo-500/80">%</span>
+                            </div>
+                            <p className="text-[10px] text-slate-400/80 mt-2 leading-normal">
+                              * 추천 손절폭 대비 {calcRiskReward.toFixed(1)}배의 기대 수익률(손익비)을 얻기 위한 상승 목표입니다.
+                            </p>
+                          </div>
+
+                        </div>
+                      </div>
+
+                      {/* Simulation Guideline Calculator Card */}
+                      {baseVal > 0 && (
+                        <div className="glass-panel rounded-3xl p-6 shadow-sm border border-slate-200 dark:border-slate-800/80 animate-in fade-in duration-300">
+                          <h3 className="text-base font-bold mb-4 flex items-center gap-2">
+                            <Target className="w-5 h-5 text-indigo-500" />
+                            <span>진입가 기준 금액 가이드라인</span>
+                          </h3>
+                          <p className="text-xs text-slate-400 mb-6">위 추천 비율을 기준 가격에 가상 대입했을 때의 결과 가격입니다.</p>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs font-semibold">
+                            
+                            {/* Base entry */}
+                            <div className="p-4 bg-slate-100/30 dark:bg-slate-900/20 rounded-xl border border-slate-200/50 dark:border-slate-800/50">
+                              <div className="text-[10px] text-slate-500 font-bold mb-1">기준 진입가</div>
+                              <div className="text-sm font-extrabold text-slate-700 dark:text-slate-300 font-mono">
+                                {baseVal.toLocaleString()}
+                                <span className="text-[10px] font-bold text-slate-400 ml-0.5">원/달러</span>
+                              </div>
+                            </div>
+
+                            {/* Stop price */}
+                            <div className="p-4 bg-rose-500/5 rounded-xl border border-rose-500/10">
+                              <div className="text-[10px] text-rose-500 font-bold mb-1">1차 익절/손절가 (스톱라인)</div>
+                              <div className="text-sm font-extrabold text-rose-500 font-mono">
+                                {Math.round(stopPrice).toLocaleString()}
+                                <span className="text-[10px] font-bold text-rose-500/80 ml-0.5">원/달러</span>
+                              </div>
+                              <div className="text-[9px] text-rose-450 mt-1 font-bold">(-{recStop}% 범위)</div>
+                            </div>
+
+                            {/* Target price */}
+                            <div className="p-4 bg-indigo-500/5 rounded-xl border border-indigo-500/10">
+                              <div className="text-[10px] text-indigo-500/90 font-bold mb-1">차기 목표가 (익스톱 트리거)</div>
+                              <div className="text-sm font-extrabold text-indigo-600 dark:text-indigo-400 font-mono">
+                                {Math.round(targetPrice).toLocaleString()}
+                                <span className="text-[10px] font-bold text-indigo-400/80 ml-0.5">원/달러</span>
+                              </div>
+                              <div className="text-[9px] text-indigo-400 mt-1 font-bold">(+{recTarget}% 범위)</div>
+                            </div>
+
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()
+              ) : (
+                <div className="glass-panel rounded-3xl p-12 shadow-sm border border-slate-200 dark:border-slate-800/80 flex flex-col items-center justify-center text-center text-slate-400 h-full min-h-[300px]">
+                  <Percent className="w-12 h-12 text-indigo-500/40 dark:text-indigo-400/30 opacity-40 mb-4 animate-[pulse_4s_infinite]" />
+                  <h3 className="text-sm font-bold text-slate-650 dark:text-slate-400 mb-1">시뮬레이션 대기 중</h3>
+                  <p className="text-xs leading-normal max-w-sm">
+                    좌측에 분석 기간 및 최고가, 최저가를 정확히 입력하시면 실시간 수학적 변동성과 최적화된 트레일링 스톱 비율이 리포트로 렌더링됩니다.
+                  </p>
+                </div>
+              )}
             </div>
 
           </div>
