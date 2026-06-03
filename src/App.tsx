@@ -749,15 +749,15 @@ export default function App() {
           }
           
           .badge.buy {
-            background-color: #d1fae5 !important;
-            color: #065f46 !important;
-            border: 1px solid #a7f3d0;
-          }
-          
-          .badge.sell {
             background-color: #fee2e2 !important;
             color: #991b1b !important;
             border: 1px solid #fecaca;
+          }
+          
+          .badge.sell {
+            background-color: #dbeafe !important;
+            color: #1e40af !important;
+            border: 1px solid #bfdbfe;
           }
           
           .footer {
@@ -797,11 +797,11 @@ export default function App() {
         <div class="summary-grid">
           <div class="summary-card">
             <div class="label">총 매수 금액 (환산)</div>
-            <div class="value" style="color: #059669;">${formatCurrency(totalBuyAmount, preferredCurrency)}</div>
+            <div class="value" style="color: #dc2626;">${formatCurrency(totalBuyAmount, preferredCurrency)}</div>
           </div>
           <div class="summary-card">
             <div class="label">총 매도 금액 (환산)</div>
-            <div class="value" style="color: #dc2626;">${formatCurrency(totalSellAmount, preferredCurrency)}</div>
+            <div class="value" style="color: #2563eb;">${formatCurrency(totalSellAmount, preferredCurrency)}</div>
           </div>
           <div class="summary-card">
             <div class="label">총 거래 수수료 (환산)</div>
@@ -809,7 +809,7 @@ export default function App() {
           </div>
           <div class="summary-card">
             <div class="label">순 실현 손익 (추정)</div>
-            <div class="value" style="color: ${netRealized >= 0 ? '#2563eb' : '#dc2626'}">
+            <div class="value" style="color: ${netRealized >= 0 ? '#dc2626' : '#2563eb'}">
               ${netRealized >= 0 ? '+' : ''}${formatCurrency(netRealized, preferredCurrency)}
             </div>
           </div>
@@ -1698,14 +1698,14 @@ export default function App() {
                   <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">총 평가 손익 (Unrealized)</span>
                   <div className={`p-2 rounded-lg ${
                     dashboardStats.totalUnrealizedPnL >= 0
-                      ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
-                      : 'bg-rose-500/10 text-rose-600 dark:text-rose-400'
+                      ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400'
+                      : 'bg-blue-500/10 text-blue-600 dark:text-blue-400'
                   }`}>
                     {dashboardStats.totalUnrealizedPnL >= 0 ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
                   </div>
                 </div>
                 <div className={`text-2xl font-extrabold ${
-                  dashboardStats.totalUnrealizedPnL >= 0 ? 'text-emerald-500' : 'text-rose-500'
+                  dashboardStats.totalUnrealizedPnL >= 0 ? 'text-rose-500' : 'text-blue-500'
                 }`}>
                   {dashboardStats.totalUnrealizedPnL >= 0 ? '+' : ''}
                   {preferredCurrency === 'USD' ? '$' : ''}
@@ -1721,14 +1721,14 @@ export default function App() {
                   <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">누적 실현 손익 (Realized)</span>
                   <div className={`p-2 rounded-lg ${
                     dashboardStats.totalRealizedPnL >= 0
-                      ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
-                      : 'bg-rose-500/10 text-rose-600 dark:text-rose-400'
+                      ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400'
+                      : 'bg-blue-500/10 text-blue-600 dark:text-blue-400'
                   }`}>
                     <CheckCircle className="w-4 h-4" />
                   </div>
                 </div>
                 <div className={`text-2xl font-extrabold ${
-                  dashboardStats.totalRealizedPnL >= 0 ? 'text-emerald-500' : 'text-rose-500'
+                  dashboardStats.totalRealizedPnL >= 0 ? 'text-rose-500' : 'text-blue-500'
                 }`}>
                   {dashboardStats.totalRealizedPnL >= 0 ? '+' : ''}
                   {preferredCurrency === 'USD' ? '$' : ''}
@@ -2045,12 +2045,12 @@ export default function App() {
                           <td className="py-4 px-6 text-right">
                             <div className="flex flex-col items-end">
                               <span className={`font-bold flex items-center gap-1 ${
-                                item.unrealizedPnL >= 0 ? 'text-emerald-500' : 'text-rose-500'
+                                item.unrealizedPnL >= 0 ? 'text-rose-500' : 'text-blue-500'
                               }`}>
                                 {item.unrealizedPnL >= 0 ? '+' : ''}
                                 {item.pnlPercent.toFixed(2)}%
                               </span>
-                              <span className={`text-[10px] ${item.unrealizedPnL >= 0 ? 'text-emerald-500/80' : 'text-rose-500/80'}`}>
+                              <span className={`text-[10px] ${item.unrealizedPnL >= 0 ? 'text-rose-500/80' : 'text-blue-500/80'}`}>
                                 ({item.unrealizedPnL >= 0 ? '+' : ''}
                                 {formatCurrency(item.unrealizedPnL, item.currency)})
                               </span>
@@ -2182,11 +2182,11 @@ export default function App() {
                         </div>
                         <div className="flex flex-col items-end">
                           <span className={`font-extrabold text-sm ${
-                            item.unrealizedPnL >= 0 ? 'text-emerald-500' : 'text-rose-500'
+                            item.unrealizedPnL >= 0 ? 'text-rose-500' : 'text-blue-500'
                           }`}>
                             {item.unrealizedPnL >= 0 ? '+' : ''}{item.pnlPercent.toFixed(2)}%
                           </span>
-                          <span className={`text-[10px] font-semibold ${item.unrealizedPnL >= 0 ? 'text-emerald-500/80' : 'text-rose-500/80'}`}>
+                          <span className={`text-[10px] font-semibold ${item.unrealizedPnL >= 0 ? 'text-rose-500/80' : 'text-blue-500/80'}`}>
                             ({item.unrealizedPnL >= 0 ? '+' : ''}{formatCurrency(item.unrealizedPnL, item.currency)})
                           </span>
                         </div>
@@ -2413,7 +2413,7 @@ export default function App() {
                           onClick={() => setTxType('BUY')}
                           className={`py-2 px-4 rounded-xl font-bold border transition-all text-center cursor-pointer ${
                             txType === 'BUY'
-                              ? 'bg-emerald-500/10 border-emerald-500 text-emerald-600 dark:text-emerald-400'
+                              ? 'bg-rose-500/10 border-rose-500 text-rose-600 dark:text-rose-400'
                               : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-500'
                           }`}
                         >
@@ -2424,7 +2424,7 @@ export default function App() {
                           onClick={() => setTxType('SELL')}
                           className={`py-2 px-4 rounded-xl font-bold border transition-all text-center cursor-pointer ${
                             txType === 'SELL'
-                              ? 'bg-rose-500/10 border-rose-500 text-rose-600 dark:text-rose-400'
+                              ? 'bg-blue-500/10 border-blue-500 text-blue-600 dark:text-blue-400'
                               : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-500'
                           }`}
                         >
@@ -2662,8 +2662,8 @@ export default function App() {
                             <td className="py-3.5 px-5 text-center">
                               <span className={`px-2 py-0.5 rounded-md text-[10px] font-extrabold ${
                                 tx.type === 'BUY'
-                                  ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
-                                  : 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20'
+                                  ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20'
+                                  : 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20'
                               }`}>
                                 {tx.type}
                               </span>
@@ -2718,8 +2718,8 @@ export default function App() {
                           <span className="text-[11px] font-bold text-slate-500">{tx.tradeDate}</span>
                           <span className={`px-2 py-0.5 rounded-md text-[9px] font-extrabold ${
                             tx.type === 'BUY'
-                              ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
-                              : 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20'
+                              ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20'
+                              : 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20'
                           }`}>
                             {tx.type === 'BUY' ? '매수 BUY' : '매도 SELL'}
                           </span>
@@ -3463,26 +3463,26 @@ export default function App() {
                           </div>
                         </div>
 
-                        {/* Bottom: Recommendation Targets (HTS style red/green pill layout) */}
+                        {/* Bottom: Recommendation Targets (HTS style red/blue pill layout) */}
                         <div className="grid grid-cols-2 gap-2 pt-0.5">
                           {/* Recommended Stop-loss */}
-                          <div className="bg-rose-50/50 dark:bg-rose-950/15 border border-rose-100/30 dark:border-rose-900/20 rounded-xl p-2 text-center">
+                          <div className="bg-blue-50/50 dark:bg-blue-950/15 border border-blue-100/30 dark:border-blue-900/20 rounded-xl p-2 text-center">
                             <div className="flex justify-center items-center gap-1 mb-0.5">
-                              <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
-                              <span className="text-[10px] text-rose-600 dark:text-rose-400 font-bold">추천 손절 (-{Math.round(item.recStop)}%)</span>
+                              <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+                              <span className="text-[10px] text-blue-600 dark:text-blue-400 font-bold">추천 손절 (-{Math.round(item.recStop)}%)</span>
                             </div>
-                            <span className="font-mono text-sm font-extrabold text-rose-600 dark:text-rose-400">
+                            <span className="font-mono text-sm font-extrabold text-blue-600 dark:text-blue-400">
                               {formatPrice(stopP)}
                             </span>
                           </div>
                           
                           {/* Recommended Target */}
-                          <div className="bg-emerald-50/50 dark:bg-emerald-950/15 border border-emerald-100/30 dark:border-emerald-900/20 rounded-xl p-2 text-center">
+                          <div className="bg-rose-50/50 dark:bg-rose-950/15 border border-rose-100/30 dark:border-rose-900/20 rounded-xl p-2 text-center">
                             <div className="flex justify-center items-center gap-1 mb-0.5">
-                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                              <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">추천 목표 (+{Math.round(item.recTarget)}%)</span>
+                              <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+                              <span className="text-[10px] text-rose-600 dark:text-rose-400 font-bold">추천 목표 (+{Math.round(item.recTarget)}%)</span>
                             </div>
-                            <span className="font-mono text-sm font-extrabold text-emerald-600 dark:text-emerald-400">
+                            <span className="font-mono text-sm font-extrabold text-rose-600 dark:text-rose-400">
                               {formatPrice(targetP)}
                             </span>
                           </div>
@@ -3559,9 +3559,9 @@ export default function App() {
                   <button
                     type="button"
                     onClick={() => setEditTxType('BUY')}
-                    className={`py-2 px-4 rounded-xl font-bold border transition-all text-center ${
+                    className={`py-2 px-4 rounded-xl font-bold border transition-all text-center cursor-pointer ${
                       editTxType === 'BUY'
-                        ? 'bg-emerald-500/10 border-emerald-500 text-emerald-600 dark:text-emerald-400'
+                        ? 'bg-rose-500/10 border-rose-500 text-rose-600 dark:text-rose-400'
                         : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-500'
                     }`}
                   >
@@ -3570,9 +3570,9 @@ export default function App() {
                   <button
                     type="button"
                     onClick={() => setEditTxType('SELL')}
-                    className={`py-2 px-4 rounded-xl font-bold border transition-all text-center ${
+                    className={`py-2 px-4 rounded-xl font-bold border transition-all text-center cursor-pointer ${
                       editTxType === 'SELL'
-                        ? 'bg-rose-500/10 border-rose-500 text-rose-600 dark:text-rose-400'
+                        ? 'bg-blue-500/10 border-blue-500 text-blue-600 dark:text-blue-400'
                         : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-500'
                     }`}
                   >
