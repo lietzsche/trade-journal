@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@variant dark (&:where(.dark, .dark *));
+
 @theme {
   /* Override Slate colors to create a premium dark obsidian & midnight fintech theme */
   --color-slate-950: #08090d;
