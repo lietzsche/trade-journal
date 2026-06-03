@@ -2708,13 +2708,13 @@ export default function App() {
                   const volatility = ((highVal - lowVal) / lowVal) * 100;
                   
                   // Period coefficient
-                  let periodCoeff = 0.45;
+                  let periodCoeff = 0.65;
                   let periodLabel = '1개월 (20일)';
                   if (calcPeriod === 'week') {
-                    periodCoeff = 0.60;
+                    periodCoeff = 0.80;
                     periodLabel = '1주일 (5일)';
                   } else if (calcPeriod === 'quarter') {
-                    periodCoeff = 0.35;
+                    periodCoeff = 0.50;
                     periodLabel = '3개월 (60일)';
                   }
 
