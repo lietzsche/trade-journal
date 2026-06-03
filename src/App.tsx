@@ -1714,7 +1714,7 @@ export default function App() {
           {/* ---------------------------------------------------- */}
           {/* Tab 1: DASHBOARD */}
           {/* ---------------------------------------------------- */}
-          <div className={`w-1/4 flex-shrink-0 px-1 md:px-0 ${activeTab === 'dashboard' ? 'h-auto' : 'h-0 overflow-hidden'}`}>
+          <div className="w-1/4 flex-shrink-0 px-1 md:px-0">
             <div className="space-y-6">
             
             {/* Risk Warnings alerts panel */}
@@ -2038,7 +2038,7 @@ export default function App() {
           {/* ---------------------------------------------------- */}
           {/* Tab 2: PORTFOLIO & TRAILING STOP */}
           {/* ---------------------------------------------------- */}
-          <div className={`w-1/4 flex-shrink-0 px-1 md:px-0 ${activeTab === 'portfolio' ? 'h-auto' : 'h-0 overflow-hidden'}`}>
+          <div className="w-1/4 flex-shrink-0 px-1 md:px-0">
             <div className="space-y-6">
 
             {/* Strategy guide banner (Collapsible, collapsed by default) */}
@@ -2506,7 +2506,7 @@ export default function App() {
           {/* ---------------------------------------------------- */}
           {/* Tab 3: TRADE LOGS (Transactions) */}
           {/* ---------------------------------------------------- */}
-          <div className={`w-1/4 flex-shrink-0 px-1 md:px-0 ${activeTab === 'transactions' ? 'h-auto' : 'h-0 overflow-hidden'}`}>
+          <div className="w-1/4 flex-shrink-0 px-1 md:px-0">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
             
             {/* Left Col: Add Transaction Form (Collapsible, collapsed by default) */}
@@ -2959,7 +2959,7 @@ export default function App() {
           {/* ---------------------------------------------------- */}
           {/* Tab 4: CALCULATOR */}
           {/* ---------------------------------------------------- */}
-          <div className={`w-1/4 flex-shrink-0 px-1 md:px-0 ${activeTab === 'calculator' ? 'h-auto' : 'h-0 overflow-hidden'}`}>
+          <div className="w-1/4 flex-shrink-0 px-1 md:px-0">
             <div className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
               
