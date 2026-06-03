@@ -3420,8 +3420,8 @@ export default function App() {
                             </span>
                           </div>
                           <div className="space-y-0.5">
-                            <span className="block text-[9px] text-slate-400 font-bold uppercase tracking-wider">변동성 (Vol)</span>
-                            <span className="font-mono text-xs font-bold text-indigo-500 dark:text-indigo-400">±{vol.toFixed(1)}%</span>
+                            <span className="block text-[9px] text-slate-400 font-bold uppercase tracking-wider">변동폭 (Vol)</span>
+                            <span className="font-mono text-xs font-bold text-indigo-500 dark:text-indigo-400">{vol.toFixed(1)}%</span>
                           </div>
                         </div>
 
