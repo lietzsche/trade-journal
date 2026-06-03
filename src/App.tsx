@@ -144,6 +144,9 @@ export default function App() {
     'calculator'
   ];
   const touchStartRef = useRef<{ x: number; y: number; time: number } | null>(null);
+  const [touchOffsetX, setTouchOffsetX] = useState(0);
+  const [isSwiping, setIsSwiping] = useState(false);
+  const currentIndex = swipeTabs.indexOf(activeTab);
 
   const handleTouchStart = (e: React.TouchEvent) => {
     if (window.innerWidth >= 768) return;
@@ -153,26 +156,21 @@ export default function App() {
       y: touch.clientY,
       time: Date.now()
     };
+    setIsSwiping(true);
+    setTouchOffsetX(0);
   };
 
-  const handleTouchEnd = (e: React.TouchEvent) => {
-    if (window.innerWidth >= 768 || !touchStartRef.current) return;
-    const touch = e.changedTouches[0];
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (window.innerWidth >= 768 || !touchStartRef.current || !isSwiping) return;
+    const touch = e.touches[0];
     const diffX = touch.clientX - touchStartRef.current.x;
     const diffY = touch.clientY - touchStartRef.current.y;
-    const duration = Date.now() - touchStartRef.current.time;
 
-    // Reset touch start reference
-    touchStartRef.current = null;
+    // Block horizontal tab swipe if the swipe gesture is predominantly vertical scrolling
+    if (Math.abs(diffY) > Math.abs(diffX)) {
+      return;
+    }
 
-    // Reject slow drag actions (duration > 350ms)
-    if (duration > 350) return;
-    // Require substantial horizontal movement (distance > 70px)
-    if (Math.abs(diffX) < 70) return;
-    // Reject vertical scrolling behaviors (vertical movement > horizontal movement)
-    if (Math.abs(diffY) > Math.abs(diffX)) return;
-
-    // Prevent tab swiping on input, slider, select, canvas, modal, or scrollable sub-sections
     const target = e.target as HTMLElement;
     if (
       target.closest('input') ||
@@ -186,14 +184,66 @@ export default function App() {
       return;
     }
 
-    const currentIndex = swipeTabs.indexOf(activeTab);
-    if (diffX > 0) {
-      // Swipe right: move to previous tab
+    // Prevent default touch sliding animation (like standard iOS back swipe)
+    if (e.cancelable) {
+      e.preventDefault();
+    }
+
+    let finalDiffX = diffX;
+    
+    // Apply rubber-band damping logic when pulling boundaries (first or last tab)
+    if (currentIndex === 0 && diffX > 0) {
+      finalDiffX = diffX * 0.25;
+    } else if (currentIndex === swipeTabs.length - 1 && diffX < 0) {
+      finalDiffX = diffX * 0.25;
+    }
+
+    setTouchOffsetX(finalDiffX);
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (window.innerWidth >= 768 || !touchStartRef.current) {
+      setIsSwiping(false);
+      setTouchOffsetX(0);
+      return;
+    }
+    const touch = e.changedTouches[0];
+    const diffX = touch.clientX - touchStartRef.current.x;
+    const diffY = touch.clientY - touchStartRef.current.y;
+    const duration = Date.now() - touchStartRef.current.time;
+
+    touchStartRef.current = null;
+    setIsSwiping(false);
+    
+    const dragDistance = touchOffsetX;
+    setTouchOffsetX(0);
+
+    // Cancel tab navigation if swipe range was too short, too vertical, or too slow (> 350ms)
+    if (Math.abs(dragDistance) < 70 || Math.abs(diffY) > Math.abs(diffX) || duration > 350) {
+      return;
+    }
+
+    // Cancel if focus is on form components or charts
+    const target = e.target as HTMLElement;
+    if (
+      target.closest('input') ||
+      target.closest('select') ||
+      target.closest('textarea') ||
+      target.closest('canvas') ||
+      target.closest('.overflow-x-auto') ||
+      target.closest('[role="dialog"]') ||
+      target.closest('.no-swipe')
+    ) {
+      return;
+    }
+
+    if (dragDistance > 70) {
+      // Swipe Right (Go to previous tab)
       if (currentIndex > 0) {
         setActiveTab(swipeTabs[currentIndex - 1]);
       }
-    } else {
-      // Swipe left: move to next tab
+    } else if (dragDistance < -70) {
+      // Swipe Left (Go to next tab)
       if (currentIndex < swipeTabs.length - 1) {
         setActiveTab(swipeTabs[currentIndex + 1]);
       }
@@ -1630,8 +1680,9 @@ export default function App() {
       {/* 3. Main Content Container */}
       <main
         onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
-        className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full py-6"
+        className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full py-6 overflow-hidden"
       >
 
         {/* Global Loading Overlay */}
@@ -1642,11 +1693,18 @@ export default function App() {
           </div>
         )}
 
-        {/* ---------------------------------------------------- */}
-        {/* Tab 1: DASHBOARD */}
-        {/* ---------------------------------------------------- */}
-        {activeTab === 'dashboard' && (
-          <div className="space-y-6">
+        <div 
+          className={`flex flex-row w-[400%] flex-nowrap ${isSwiping ? '' : 'transition-transform duration-300 ease-out'}`}
+          style={{
+            transform: `translateX(calc(-${currentIndex * 25}% + ${touchOffsetX}px))`
+          }}
+        >
+
+          {/* ---------------------------------------------------- */}
+          {/* Tab 1: DASHBOARD */}
+          {/* ---------------------------------------------------- */}
+          <div className="w-1/4 flex-shrink-0 px-1 md:px-0">
+            <div className="space-y-6">
             
             {/* Risk Warnings alerts panel */}
             {alerts.length > 0 && (
@@ -1935,14 +1993,14 @@ export default function App() {
 
             </div>
 
+            </div>
           </div>
-        )}
 
-        {/* ---------------------------------------------------- */}
-        {/* Tab 2: PORTFOLIO & TRAILING STOP */}
-        {/* ---------------------------------------------------- */}
-        {activeTab === 'portfolio' && (
-          <div className="space-y-6">
+          {/* ---------------------------------------------------- */}
+          {/* Tab 2: PORTFOLIO & TRAILING STOP */}
+          {/* ---------------------------------------------------- */}
+          <div className="w-1/4 flex-shrink-0 px-1 md:px-0">
+            <div className="space-y-6">
 
             {/* Strategy guide banner (Collapsible, collapsed by default) */}
             <div className="glass-panel rounded-3xl p-5 border border-slate-200 dark:border-slate-800/80 shadow-sm relative overflow-hidden bg-gradient-to-r from-indigo-500/5 via-transparent to-amber-500/5 transition-all duration-300">
@@ -2403,14 +2461,14 @@ export default function App() {
               </div>
             </div>
 
+            </div>
           </div>
-        )}
 
-        {/* ---------------------------------------------------- */}
-        {/* Tab 3: TRADE LOGS (Transactions) */}
-        {/* ---------------------------------------------------- */}
-        {activeTab === 'transactions' && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+          {/* ---------------------------------------------------- */}
+          {/* Tab 3: TRADE LOGS (Transactions) */}
+          {/* ---------------------------------------------------- */}
+          <div className="w-1/4 flex-shrink-0 px-1 md:px-0">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
             
             {/* Left Col: Add Transaction Form (Collapsible, collapsed by default) */}
             <div className="glass-panel rounded-3xl p-5 shadow-sm border border-slate-200 dark:border-slate-800/80 transition-all duration-300">
@@ -2856,11 +2914,14 @@ export default function App() {
 
             </div>
 
+            </div>
           </div>
-        )}
 
-        {activeTab === 'calculator' && (
-          <div className="space-y-6">
+          {/* ---------------------------------------------------- */}
+          {/* Tab 4: CALCULATOR */}
+          {/* ---------------------------------------------------- */}
+          <div className="w-1/4 flex-shrink-0 px-1 md:px-0">
+            <div className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
               
               {/* Left Col: Inputs */}
@@ -3568,7 +3629,8 @@ export default function App() {
           </div>
 
         </div>
-      )}
+      </div>
+    </div>
 
       </main>
 
