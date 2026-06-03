@@ -301,6 +301,20 @@ export default function App() {
     }
   };
 
+  // Format sqlite timestamp to local YYYY-MM-DD HH:MM
+  const formatCalcDate = (dateStr: string) => {
+    try {
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) {
+        return dateStr.substring(0, 16).replace('T', ' ');
+      }
+      const pad = (n: number) => String(n).padStart(2, '0');
+      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    } catch {
+      return dateStr.substring(0, 16).replace('T', ' ');
+    }
+  };
+
   // Load Volatility Strategy Calculator History
   const loadCalcHistory = async () => {
     try {
@@ -413,8 +427,8 @@ export default function App() {
     if (editCalcPeriod === 'week') periodCoeff = 0.80;
     else if (editCalcPeriod === 'quarter') periodCoeff = 0.50;
 
-    const recStop = Math.max(1, Math.min(30, Math.round(volatility * periodCoeff)));
-    const recTarget = Math.max(1, Math.min(50, Math.round(recStop * editCalcRiskReward)));
+    const recStop = Math.max(1, Math.min(30, Math.round(volatility * periodCoeff * 10) / 10));
+    const recTarget = Math.max(1, Math.min(50, Math.round(recStop * editCalcRiskReward * 10) / 10));
 
     try {
       setActionLoading(true);
@@ -2933,9 +2947,9 @@ export default function App() {
                     periodLabel = '3개월 (60일)';
                   }
 
-                  // Calculated custom parameters (rounded)
-                  const recStop = Math.max(1, Math.min(30, Math.round(volatility * periodCoeff)));
-                  const recTarget = Math.max(1, Math.min(50, Math.round(recStop * calcRiskReward)));
+                  // Calculated custom parameters (rounded to 1 decimal place)
+                  const recStop = Math.max(1, Math.min(30, Math.round(volatility * periodCoeff * 10) / 10));
+                  const recTarget = Math.max(1, Math.min(50, Math.round(recStop * calcRiskReward * 10) / 10));
                   
                   // Real simulated prices
                   const stopPrice = baseVal > 0 ? baseVal * (1 - recStop / 100) : 0;
@@ -3118,6 +3132,7 @@ export default function App() {
                       <tr className="border-b border-slate-200 dark:border-slate-800 text-slate-400 font-semibold">
                         <th className="py-3 px-4">종목</th>
                         <th className="py-3 px-4">분석 기간</th>
+                        <th className="py-3 px-4">계산 일시</th>
                         <th className="py-3 px-4">기준 진입가</th>
                         <th className="py-3 px-4">최고가 / 최저가</th>
                         <th className="py-3 px-4">변동폭</th>
@@ -3161,6 +3176,9 @@ export default function App() {
                                   <option value="month">1개월</option>
                                   <option value="quarter">3개월</option>
                                 </select>
+                              </td>
+                              <td className="py-3 px-4 text-slate-400 font-mono text-[11px] whitespace-nowrap">
+                                {formatCalcDate(item.createdAt)}
                               </td>
                               <td className="py-3 px-4">
                                 <input
@@ -3229,16 +3247,19 @@ export default function App() {
                           <tr key={item.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-900/20 transition-colors">
                             <td className="py-4 px-4 font-bold text-slate-750 dark:text-slate-200">{item.ticker}</td>
                             <td className="py-4 px-4 text-slate-400 font-semibold">{periodStr}</td>
+                            <td className="py-4 px-4 text-slate-400 font-mono text-[11px] whitespace-nowrap">
+                              {formatCalcDate(item.createdAt)}
+                            </td>
                             <td className="py-4 px-4 font-mono font-bold text-slate-700 dark:text-slate-300">{item.basePrice.toLocaleString()}</td>
                             <td className="py-4 px-4 font-mono font-medium text-slate-500 dark:text-slate-400">
                               {item.highPrice.toLocaleString()} / {item.lowPrice.toLocaleString()}
                             </td>
-                            <td className="py-4 px-4 font-mono font-bold text-indigo-550 dark:text-indigo-400">{vol.toFixed(1)}%</td>
+                            <td className="py-4 px-4 font-mono font-bold text-indigo-550 dark:text-indigo-405">{vol.toFixed(1)}%</td>
                             <td className="py-4 px-4 font-bold text-slate-650 dark:text-slate-300">{item.riskReward.toFixed(1)}배</td>
                             <td className="py-4 px-4">
-                              <span className="text-rose-500 font-bold">-{item.recStop}%</span>
+                              <span className="text-rose-500 font-bold">-{item.recStop.toFixed(1)}%</span>
                               <span className="text-slate-400 mx-1">/</span>
-                              <span className="text-indigo-400 font-bold">+{item.recTarget}%</span>
+                              <span className="text-indigo-400 font-bold">+{item.recTarget.toFixed(1)}%</span>
                             </td>
                             <td className="py-4 px-4">
                               <div className="font-mono text-rose-500 font-bold">{Math.round(stopP).toLocaleString()}</div>
@@ -3288,7 +3309,7 @@ export default function App() {
                         <div key={item.id} className="p-4 bg-indigo-50/40 dark:bg-indigo-950/10 border border-indigo-100/80 dark:border-indigo-900/30 rounded-2xl space-y-3.5 animate-in fade-in duration-200">
                           <div className="flex items-center gap-2 border-b border-indigo-100/50 dark:border-indigo-900/20 pb-2">
                             <span className="text-xs font-extrabold text-indigo-600 dark:text-indigo-400">히스토리 수정</span>
-                            <span className="text-[10px] text-slate-500 dark:text-slate-400">({item.ticker})</span>
+                            <span className="text-[10px] text-slate-500 dark:text-slate-400">({item.ticker} · {formatCalcDate(item.createdAt)})</span>
                           </div>
                           
                           <div className="grid grid-cols-2 gap-3 text-xs">
@@ -3298,7 +3319,7 @@ export default function App() {
                                 type="text"
                                 value={editCalcTicker}
                                 onChange={(e) => setEditCalcTicker(e.target.value.toUpperCase())}
-                                className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/80 rounded-xl px-3 py-1.5 font-bold text-slate-800 dark:text-slate-100 focus:outline-none focus:border-indigo-500 transition-all"
+                                className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-805 rounded-xl px-3 py-1.5 font-bold text-slate-800 dark:text-slate-100 focus:outline-none focus:border-indigo-500 transition-all"
                               />
                             </div>
                             <div>
@@ -3306,7 +3327,7 @@ export default function App() {
                               <select
                                 value={editCalcPeriod}
                                 onChange={(e) => setEditCalcPeriod(e.target.value as any)}
-                                className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/80 rounded-xl px-3 py-1.5 font-semibold text-slate-800 dark:text-slate-100 focus:outline-none focus:border-indigo-500 transition-all"
+                                className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-805 rounded-xl px-3 py-1.5 font-semibold text-slate-800 dark:text-slate-100 focus:outline-none focus:border-indigo-500 transition-all"
                               >
                                 <option value="week">1주일 (5일)</option>
                                 <option value="month">1개월 (20일)</option>
@@ -3319,7 +3340,7 @@ export default function App() {
                                 type="number"
                                 value={editCalcBasePrice}
                                 onChange={(e) => setEditCalcBasePrice(e.target.value)}
-                                className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/80 rounded-xl px-3 py-1.5 font-semibold text-right text-slate-800 dark:text-slate-100 focus:outline-none focus:border-indigo-500 transition-all"
+                                className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-850 rounded-xl px-3 py-1.5 font-semibold text-right text-slate-800 dark:text-slate-100 focus:outline-none focus:border-indigo-500 transition-all"
                               />
                             </div>
                             <div>
@@ -3327,7 +3348,7 @@ export default function App() {
                               <select
                                 value={editCalcRiskReward}
                                 onChange={(e) => setEditCalcRiskReward(parseFloat(e.target.value))}
-                                className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/80 rounded-xl px-3 py-1.5 font-semibold text-slate-800 dark:text-slate-100 focus:outline-none focus:border-indigo-500 transition-all"
+                                className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-850 rounded-xl px-3 py-1.5 font-semibold text-slate-800 dark:text-slate-100 focus:outline-none focus:border-indigo-500 transition-all"
                               >
                                 <option value={1.5}>1.5배</option>
                                 <option value={2.0}>2.0배</option>
@@ -3340,7 +3361,7 @@ export default function App() {
                                 type="number"
                                 value={editCalcHighPrice}
                                 onChange={(e) => setEditCalcHighPrice(e.target.value)}
-                                className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/80 rounded-xl px-3 py-1.5 font-semibold text-right text-slate-800 dark:text-slate-100 focus:outline-none focus:border-indigo-500 transition-all"
+                                className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-855 rounded-xl px-3 py-1.5 font-semibold text-right text-slate-800 dark:text-slate-100 focus:outline-none focus:border-indigo-500 transition-all"
                               />
                             </div>
                             <div>
@@ -3349,7 +3370,7 @@ export default function App() {
                                 type="number"
                                 value={editCalcLowPrice}
                                 onChange={(e) => setEditCalcLowPrice(e.target.value)}
-                                className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/80 rounded-xl px-3 py-1.5 font-semibold text-right text-slate-800 dark:text-slate-100 focus:outline-none focus:border-indigo-500 transition-all"
+                                className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-855 rounded-xl px-3 py-1.5 font-semibold text-right text-slate-800 dark:text-slate-100 focus:outline-none focus:border-indigo-500 transition-all"
                               />
                             </div>
                           </div>
@@ -3357,7 +3378,7 @@ export default function App() {
                           <div className="flex gap-2 justify-end pt-2 border-t border-indigo-100/50 dark:border-indigo-900/20">
                             <button
                               onClick={() => handleSaveEditCalcHistory(item.id)}
-                              className="bg-indigo-500 hover:bg-indigo-600 text-white px-3.5 py-1.5 rounded-xl font-bold transition-all flex items-center gap-1.5 shadow-sm text-xs cursor-pointer"
+                              className="bg-indigo-500 hover:bg-indigo-650 text-white px-3.5 py-1.5 rounded-xl font-bold transition-all flex items-center gap-1.5 shadow-sm text-xs cursor-pointer"
                             >
                               <Check className="w-3.5 h-3.5" />
                               <span>저장</span>
@@ -3375,7 +3396,7 @@ export default function App() {
                     }
 
                     return (
-                      <div key={item.id} className="p-4 bg-white dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800/60 rounded-2xl shadow-sm space-y-3.5 hover:border-slate-200 dark:hover:border-slate-700/80 transition-all duration-200">
+                      <div key={item.id} className="p-4 bg-white dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800/60 rounded-2xl shadow-sm space-y-3 hover:border-slate-200 dark:hover:border-slate-700/80 transition-all duration-200">
                         {/* Header: Ticker, Period, RiskReward and actions */}
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
@@ -3407,8 +3428,13 @@ export default function App() {
                           </div>
                         </div>
 
+                        {/* 계산 일시 */}
+                        <div className="text-[10px] text-slate-400/80 dark:text-slate-500 font-semibold px-0.5 -mt-2 pb-1.5 border-b border-slate-100/50 dark:border-slate-800/30">
+                          계산 일시: {formatCalcDate(item.createdAt)}
+                        </div>
+
                         {/* Mid detail grid */}
-                        <div className="grid grid-cols-3 gap-2 py-2.5 border-y border-slate-100/80 dark:border-slate-800/40 text-center">
+                        <div className="grid grid-cols-3 gap-2 py-2.5 border-b border-slate-100/80 dark:border-slate-800/40 text-center">
                           <div className="space-y-0.5">
                             <span className="block text-[9px] text-slate-400 font-bold uppercase tracking-wider">기준 진입가</span>
                             <span className="font-mono text-xs font-bold text-slate-750 dark:text-slate-200">{item.basePrice.toLocaleString()}</span>
