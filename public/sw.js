@@ -30,6 +30,11 @@ self.addEventListener('activate', (e) => {
 });
 
 self.addEventListener('fetch', (e) => {
+  // Only cache requests from http or https schemes
+  if (!e.request.url.startsWith('http')) {
+    return;
+  }
+
   const url = e.request.url;
 
   // Let API requests bypass PWA cache completely
