@@ -3194,9 +3194,9 @@ export default function App() {
                                 onChange={(e) => setEditCalcRiskReward(parseFloat(e.target.value))}
                                 className="bg-white dark:bg-slate-900 border border-slate-250 dark:border-slate-850 rounded px-2 py-1 font-semibold text-slate-800 dark:text-slate-100 focus:outline-none focus:border-indigo-500"
                               >
-                                <option value="1.5">1.5배</option>
-                                <option value="2.0">2.0배</option>
-                                <option value="2.5">2.5배</option>
+                                <option value={1.5}>1.5배</option>
+                                <option value={2.0}>2.0배</option>
+                                <option value={2.5}>2.5배</option>
                               </select>
                             </td>
                             <td className="py-3 px-4 text-slate-400 font-mono font-bold">-</td>
