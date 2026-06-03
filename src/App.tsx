@@ -1481,14 +1481,16 @@ export default function App() {
                             <stop offset="95%" stopColor="#6366f1" stopOpacity={0.01}/>
                           </linearGradient>
                         </defs>
-                        <CartesianGrid strokeDasharray="3 3" stroke={darkMode ? '#334155' : '#e2e8f0'} />
+                        <CartesianGrid strokeDasharray="3 3" stroke={darkMode ? '#222638' : '#e2e8f0'} />
                         <XAxis dataKey="month" stroke={darkMode ? '#94a3b8' : '#64748b'} />
                         <YAxis stroke={darkMode ? '#94a3b8' : '#64748b'} />
                         <Tooltip
                           contentStyle={{
-                            backgroundColor: darkMode ? '#0f172a' : '#ffffff',
-                            borderColor: darkMode ? '#334155' : '#cbd5e1',
+                            backgroundColor: darkMode ? '#171a26' : '#ffffff',
+                            borderColor: darkMode ? '#222638' : '#cbd5e1',
                             color: darkMode ? '#f8fafc' : '#0f172a',
+                            borderRadius: '12px',
+                            boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
                           }}
                           formatter={(value) => [formatCurrency(Number(value), preferredCurrency), '누적 손익']}
                         />
@@ -1537,9 +1539,11 @@ export default function App() {
                             </Pie>
                             <Tooltip
                               contentStyle={{
-                                backgroundColor: darkMode ? '#0f172a' : '#ffffff',
-                                borderColor: darkMode ? '#334155' : '#cbd5e1',
+                                backgroundColor: darkMode ? '#171a26' : '#ffffff',
+                                borderColor: darkMode ? '#222638' : '#cbd5e1',
                                 color: darkMode ? '#f8fafc' : '#0f172a',
+                                borderRadius: '12px',
+                                boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
                               }}
                               formatter={(value) => formatCurrency(Number(value), preferredCurrency)}
                             />
