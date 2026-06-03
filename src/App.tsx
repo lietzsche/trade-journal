@@ -315,6 +315,15 @@ export default function App() {
     }
   };
 
+  // Format price (allowing up to 4 decimal places for USD, displays as integer for KRW)
+  const formatPrice = (val: number) => {
+    if (val === undefined || val === null || isNaN(val)) return '0';
+    return val.toLocaleString(undefined, {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 4
+    });
+  };
+
   // Load Volatility Strategy Calculator History
   const loadCalcHistory = async () => {
     try {
@@ -3073,7 +3082,7 @@ export default function App() {
                             <div className="p-4 bg-rose-500/5 rounded-xl border border-rose-500/10">
                               <div className="text-[10px] text-rose-500 font-bold mb-1">1차 익절/손절가 (스톱라인)</div>
                               <div className="text-sm font-extrabold text-rose-500 font-mono">
-                                {Math.round(stopPrice).toLocaleString()}
+                                {formatPrice(stopPrice)}
                                 <span className="text-[10px] font-bold text-rose-500/80 ml-0.5">원/달러</span>
                               </div>
                               <div className="text-[9px] text-rose-450 mt-1 font-bold">(-{recStop}% 범위)</div>
@@ -3083,7 +3092,7 @@ export default function App() {
                             <div className="p-4 bg-indigo-500/5 rounded-xl border border-indigo-500/10">
                               <div className="text-[10px] text-indigo-500/90 font-bold mb-1">차기 목표가 (익스톱 트리거)</div>
                               <div className="text-sm font-extrabold text-indigo-600 dark:text-indigo-400 font-mono">
-                                {Math.round(targetPrice).toLocaleString()}
+                                {formatPrice(targetPrice)}
                                 <span className="text-[10px] font-bold text-indigo-400/80 ml-0.5">원/달러</span>
                               </div>
                               <div className="text-[9px] text-indigo-400 mt-1 font-bold">(+{recTarget}% 범위)</div>
@@ -3262,8 +3271,8 @@ export default function App() {
                               <span className="text-indigo-400 font-bold">+{item.recTarget.toFixed(1)}%</span>
                             </td>
                             <td className="py-4 px-4">
-                              <div className="font-mono text-rose-500 font-bold">{Math.round(stopP).toLocaleString()}</div>
-                              <div className="font-mono text-indigo-400 text-[10px] font-bold">{Math.round(targetP).toLocaleString()}</div>
+                              <div className="font-mono text-rose-500 font-bold">{formatPrice(stopP)}</div>
+                              <div className="font-mono text-indigo-400 text-[10px] font-bold">{formatPrice(targetP)}</div>
                             </td>
                             <td className="py-4 px-4 text-right">
                               <div className="flex justify-end gap-2">
@@ -3457,10 +3466,10 @@ export default function App() {
                           <div className="bg-rose-50/50 dark:bg-rose-950/15 border border-rose-100/30 dark:border-rose-900/20 rounded-xl p-2 text-center">
                             <div className="flex justify-center items-center gap-1 mb-0.5">
                               <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
-                              <span className="text-[10px] text-rose-600 dark:text-rose-400 font-bold">추천 손절 (-{item.recStop}%)</span>
+                              <span className="text-[10px] text-rose-600 dark:text-rose-400 font-bold">추천 손절 (-{item.recStop.toFixed(1)}%)</span>
                             </div>
                             <span className="font-mono text-sm font-extrabold text-rose-600 dark:text-rose-400">
-                              {Math.round(stopP).toLocaleString()}
+                              {formatPrice(stopP)}
                             </span>
                           </div>
                           
@@ -3468,10 +3477,10 @@ export default function App() {
                           <div className="bg-emerald-50/50 dark:bg-emerald-950/15 border border-emerald-100/30 dark:border-emerald-900/20 rounded-xl p-2 text-center">
                             <div className="flex justify-center items-center gap-1 mb-0.5">
                               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                              <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">추천 목표 (+{item.recTarget}%)</span>
+                              <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">추천 목표 (+{item.recTarget.toFixed(1)}%)</span>
                             </div>
                             <span className="font-mono text-sm font-extrabold text-emerald-600 dark:text-emerald-400">
-                              {Math.round(targetP).toLocaleString()}
+                              {formatPrice(targetP)}
                             </span>
                           </div>
                         </div>
