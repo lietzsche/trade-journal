@@ -758,26 +758,38 @@ authApp.get('/dashboard', async (c) => {
       };
     });
 
-    // Handle warning/stop-loss risk alerts
+    // Handle warning/stop-loss risk alerts dynamically using user custom values
     const alerts: { ticker: string; message: string; type: 'warning' | 'danger' }[] = [];
     holdings.forEach((item: any) => {
       const pnlPercent = ((item.currentPrice - item.buyPrice) / item.buyPrice) * 100;
-      const level = Math.floor(pnlPercent / 10);
+      
+      // Calculate dynamic level using trailingTargetPercent (default 10%)
+      const step = item.trailingTargetPercent || 10;
+      const level = Math.floor(pnlPercent / step);
       const displayLevel = Math.max(0, level);
-      const stopLoss = item.buyPrice * (1 + displayLevel * 0.1) * 0.95;
+      
+      // Calculate dynamic stopLoss using trailingStopPercent (default 5%)
+      const stopPercent = item.trailingStopPercent || 5;
+      const stopCoeff = 1 - (stopPercent / 100);
+      
+      // Trailing stop-loss price formula
+      const stopLoss = item.buyPrice * (1 + displayLevel * (step / 100)) * stopCoeff;
+
+      // Format currency suffix based on item's currency setting
+      const currencySuffix = item.currency === 'USD' ? '$' : '원';
 
       // If current price is below stopLoss, trigger danger alert
       if (item.currentPrice <= stopLoss) {
         alerts.push({
           ticker: item.ticker,
-          message: `현재가(${item.currentPrice.toLocaleString()}원)가 익손절선(${stopLoss.toLocaleString()}원) 이하로 하락했습니다! 즉시 대응이 필요합니다.`,
+          message: `현재가(${item.currentPrice.toLocaleString()}${currencySuffix})가 설정된 트레일링 익손절선(${stopLoss.toLocaleString()}${currencySuffix}) 이하로 하락했습니다! 즉시 대응이 필요합니다. (설정: 목표 +${step}% / 스톱 -${stopPercent}%)`,
           type: 'danger',
         });
       } else if (item.currentPrice <= stopLoss * 1.03) {
         // If within 3% of stop loss, trigger warning alert
         alerts.push({
           ticker: item.ticker,
-          message: `현재가가 익손절선(${stopLoss.toLocaleString()}원) 대비 3% 이내 근접했습니다. 주의하세요!`,
+          message: `현재가가 설정된 트레일링 익손절선(${stopLoss.toLocaleString()}${currencySuffix}) 대비 3% 이내 근접했습니다. 주의하세요! (설정: 목표 +${step}% / 스톱 -${stopPercent}%)`,
           type: 'warning',
         });
       }

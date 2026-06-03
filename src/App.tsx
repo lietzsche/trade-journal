@@ -1935,6 +1935,9 @@ export default function App() {
                       </div>
                     </div>
                   </div>
+                  <p className="text-[10px] text-slate-400/80 mt-3 italic leading-normal">
+                    * 위 공식 가이드는 기본 설정값(목표 +10% / 스톱 -5%) 기준의 예시이며, 실제 트레일링 스톱 익손절선은 보유 자산 목록에서 각 종목의 우측 '전략 설정' 열에 지정하신 개별 비율에 따라 동적으로 자동 적용됩니다.
+                  </p>
                 </div>
               )}
             </div>
