@@ -25,7 +25,8 @@ import {
   ArrowRight,
   ChevronRight,
   FileSpreadsheet,
-  FileText
+  FileText,
+  Copy
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -627,6 +628,44 @@ export default function App() {
       </html>
     `);
     printWindow.document.close();
+  };
+
+  const copyStrategyGuide = () => {
+    const text = `[트레일링 스톱(Trailing Stop) 전략 및 공식]
+1. 평가 손익률 (P&L%): ((현재가 - 평단가) / 평단가) * 100
+2. 익스톱 레벨 (Level): 10% 상승마다 레벨 1씩 증가 (Lv = Math.floor(손익률 / 10))
+3. 익절/손절가 (Stop Loss):
+   - Lv ≤ 0 : 평단가 대비 -5%
+   - Lv ≥ 1 : 평단가 * (1 + (Lv - 1) * 0.1)
+4. 차기 목표가 (Target):
+   - Lv < 0 : 평단가(본전)
+   - Lv ≥ 0 : 평단가 * (1 + (Lv + 1) * 0.1)`;
+    
+    navigator.clipboard.writeText(text)
+      .then(() => alert('트레일링 스톱 전략 공식이 클립보드에 복사되었습니다.'))
+      .catch((err) => alert('복사에 실패했습니다: ' + err));
+  };
+
+  const copyItemStrategy = (item: PortfolioItem) => {
+    const formattedBuyPrice = formatCurrency(item.buyPrice, item.currency);
+    const formattedCurrentPrice = formatCurrency(item.currentPrice, item.currency);
+    const formattedStopLoss = formatCurrency(item.stopLoss, item.currency);
+    const formattedNextTarget = formatCurrency(item.nextTarget, item.currency);
+    const pnlSign = item.unrealizedPnL >= 0 ? '+' : '';
+    const formattedPnL = `${pnlSign}${formatCurrency(item.unrealizedPnL, item.currency)} (${pnlSign}${item.pnlPercent.toFixed(2)}%)`;
+
+    const text = `[트레일링 스톱 전략 - ${item.ticker}]
+• 종목: ${item.ticker}
+• 매입평단가: ${formattedBuyPrice}
+• 현재가: ${formattedCurrentPrice}
+• 평가손익: ${formattedPnL}
+• 현재 레벨: Lv.${item.level}
+• 익절/손절가(Stop Loss): ${formattedStopLoss}${item.currentPrice <= item.stopLoss ? ' (스톱 도달!)' : ''}
+• 차기 목표가(Target): ${formattedNextTarget}`;
+
+    navigator.clipboard.writeText(text)
+      .then(() => alert(`${item.ticker} 종목의 트레일링 스톱 전략 매개변수가 클립보드에 복사되었습니다.`))
+      .catch((err) => alert('복사에 실패했습니다: ' + err));
   };
 
   // Auth Action Handlers
@@ -1550,10 +1589,23 @@ export default function App() {
                   <span>⚠️</span>
                   <span>트레일링 스톱(Trailing Stop) 전략 안내 및 공식</span>
                 </h3>
-                <button className="text-[10px] sm:text-xs font-bold bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 px-3 py-1.5 rounded-xl border border-indigo-500/20 hover:bg-indigo-500/20 transition-all flex items-center gap-1 cursor-pointer">
-                  <span>{showGuide ? '접기' : '자세히 보기'}</span>
-                  <span className={`transform transition-transform duration-300 ${showGuide ? 'rotate-180' : ''}`}>▼</span>
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      copyStrategyGuide();
+                    }}
+                    className="text-[10px] sm:text-xs font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 px-3 py-1.5 rounded-xl border border-amber-500/20 hover:bg-amber-500/20 transition-all flex items-center gap-1.5 cursor-pointer"
+                    title="전략 공식 복사"
+                  >
+                    <Copy className="w-3 h-3" />
+                    <span>공식 복사</span>
+                  </button>
+                  <button className="text-[10px] sm:text-xs font-bold bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 px-3 py-1.5 rounded-xl border border-indigo-500/20 hover:bg-indigo-500/20 transition-all flex items-center gap-1 cursor-pointer">
+                    <span>{showGuide ? '접기' : '자세히 보기'}</span>
+                    <span className={`transform transition-transform duration-300 ${showGuide ? 'rotate-180' : ''}`}>▼</span>
+                  </button>
+                </div>
               </div>
               
               {showGuide && (
@@ -1623,7 +1675,18 @@ export default function App() {
                     {portfolio.length > 0 ? (
                       portfolio.map((item) => (
                         <tr key={item.id} className="hover:bg-slate-100/40 dark:hover:bg-slate-900/10 transition-colors">
-                          <td className="py-4 px-6 font-extrabold tracking-wider">{item.ticker}</td>
+                          <td className="py-4 px-6 font-extrabold tracking-wider">
+                            <div className="flex items-center gap-1.5">
+                              <span>{item.ticker}</span>
+                              <button
+                                onClick={() => copyItemStrategy(item)}
+                                className="text-slate-400 hover:text-indigo-500 hover:bg-slate-200/60 dark:hover:bg-slate-800/60 p-1 rounded-lg transition-colors cursor-pointer"
+                                title="트레일링 스톱 설정값 복사"
+                              >
+                                <Copy className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </td>
                           <td className="py-4 px-6 text-right font-semibold">{item.quantity.toLocaleString()}개</td>
                           <td className="py-4 px-6 text-right font-mono">{formatCurrency(item.buyPrice, item.currency)}</td>
                           
@@ -1748,6 +1811,13 @@ export default function App() {
                           }`}>
                             Lv.{item.level}
                           </span>
+                          <button
+                            onClick={() => copyItemStrategy(item)}
+                            className="text-slate-400 hover:text-indigo-500 hover:bg-slate-200/60 dark:hover:bg-slate-800/60 p-1 rounded-lg transition-colors cursor-pointer"
+                            title="트레일링 스톱 설정값 복사"
+                          >
+                            <Copy className="w-3.5 h-3.5" />
+                          </button>
                         </div>
                         <div className="flex flex-col items-end">
                           <span className={`font-extrabold text-sm ${
