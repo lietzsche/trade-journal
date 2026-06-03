@@ -39,3 +39,17 @@ export const portfolioTransactions = sqliteTable('portfolio_transactions', {
   memo: text('memo'),
   createdAt: text('created_at').default(sql`CURRENT_TIMESTAMP`).notNull(),
 });
+
+export const calculatorHistory = sqliteTable('calculator_history', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  userId: integer('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
+  ticker: text('ticker').notNull(),
+  period: text('period').$type<'week' | 'month' | 'quarter'>().notNull(),
+  basePrice: real('base_price').notNull(),
+  highPrice: real('high_price').notNull(),
+  lowPrice: real('low_price').notNull(),
+  riskReward: real('risk_reward').notNull(),
+  recStop: integer('rec_stop').notNull(),
+  recTarget: integer('rec_target').notNull(),
+  createdAt: text('created_at').default(sql`CURRENT_TIMESTAMP`).notNull(),
+});

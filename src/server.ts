@@ -803,6 +803,131 @@ authApp.get('/dashboard', async (c) => {
   }
 });
 
+// D. Volatility Strategy Calculator History APIs
+authApp.get('/calculator/history', async (c) => {
+  const db = drizzle(c.env.DB, { schema });
+  const userId = c.get('userId');
+
+  try {
+    const history = await db
+      .select()
+      .from(schema.calculatorHistory)
+      .where(eq(schema.calculatorHistory.userId, userId))
+      .orderBy(desc(schema.calculatorHistory.createdAt));
+
+    return c.json({ success: true, history });
+  } catch (err: any) {
+    return c.json({ error: '계산 히스토리를 조회하는 도중 오류가 발생했습니다: ' + err.message }, 500);
+  }
+});
+
+authApp.post('/calculator/history', async (c) => {
+  const db = drizzle(c.env.DB, { schema });
+  const userId = c.get('userId');
+  const body = await c.req.json();
+
+  const { ticker, period, basePrice, highPrice, lowPrice, riskReward, recStop, recTarget } = body;
+
+  if (!ticker || !ticker.trim()) {
+    return c.json({ error: '종목 티커를 입력해 주세요.' }, 400);
+  }
+  if (!period || !['week', 'month', 'quarter'].includes(period)) {
+    return c.json({ error: '올바른 분석 기간을 지정해 주세요.' }, 400);
+  }
+  if (basePrice === undefined || isNaN(Number(basePrice)) || Number(basePrice) <= 0) {
+    return c.json({ error: '올바른 기준 진입가를 입력해 주세요.' }, 400);
+  }
+  if (highPrice === undefined || isNaN(Number(highPrice)) || Number(highPrice) <= 0) {
+    return c.json({ error: '올바른 기간 내 최고가를 입력해 주세요.' }, 400);
+  }
+  if (lowPrice === undefined || isNaN(Number(lowPrice)) || Number(lowPrice) <= 0) {
+    return c.json({ error: '올바른 기간 내 최저가를 입력해 주세요.' }, 400);
+  }
+
+  try {
+    await db.insert(schema.calculatorHistory).values({
+      userId,
+      ticker: ticker.trim().toUpperCase(),
+      period,
+      basePrice: Number(basePrice),
+      highPrice: Number(highPrice),
+      lowPrice: Number(lowPrice),
+      riskReward: Number(riskReward ?? 2.0),
+      recStop: Number(recStop),
+      recTarget: Number(recTarget),
+    });
+
+    return c.json({ success: true, message: '전략 계산 히스토리가 저장되었습니다.' });
+  } catch (err: any) {
+    return c.json({ error: '히스토리 저장 중 오류가 발생했습니다: ' + err.message }, 500);
+  }
+});
+
+authApp.put('/calculator/history/:id', async (c) => {
+  const db = drizzle(c.env.DB, { schema });
+  const userId = c.get('userId');
+  const id = parseInt(c.req.param('id'));
+  const body = await c.req.json();
+
+  const { ticker, period, basePrice, highPrice, lowPrice, riskReward, recStop, recTarget } = body;
+
+  try {
+    // Verify ownership
+    const [existing] = await db
+      .select()
+      .from(schema.calculatorHistory)
+      .where(and(eq(schema.calculatorHistory.id, id), eq(schema.calculatorHistory.userId, userId)));
+
+    if (!existing) {
+      return c.json({ error: '수정하려는 항목을 찾을 수 없거나 권한이 없습니다.' }, 404);
+    }
+
+    await db
+      .update(schema.calculatorHistory)
+      .set({
+        ticker: ticker ? ticker.trim().toUpperCase() : existing.ticker,
+        period: period || existing.period,
+        basePrice: basePrice !== undefined ? Number(basePrice) : existing.basePrice,
+        highPrice: highPrice !== undefined ? Number(highPrice) : existing.highPrice,
+        lowPrice: lowPrice !== undefined ? Number(lowPrice) : existing.lowPrice,
+        riskReward: riskReward !== undefined ? Number(riskReward) : existing.riskReward,
+        recStop: recStop !== undefined ? Number(recStop) : existing.recStop,
+        recTarget: recTarget !== undefined ? Number(recTarget) : existing.recTarget,
+      })
+      .where(eq(schema.calculatorHistory.id, id));
+
+    return c.json({ success: true, message: '전략 계산 히스토리가 수정되었습니다.' });
+  } catch (err: any) {
+    return c.json({ error: '히스토리 수정 중 오류가 발생했습니다: ' + err.message }, 500);
+  }
+});
+
+authApp.delete('/calculator/history/:id', async (c) => {
+  const db = drizzle(c.env.DB, { schema });
+  const userId = c.get('userId');
+  const id = parseInt(c.req.param('id'));
+
+  try {
+    // Verify ownership
+    const [existing] = await db
+      .select()
+      .from(schema.calculatorHistory)
+      .where(and(eq(schema.calculatorHistory.id, id), eq(schema.calculatorHistory.userId, userId)));
+
+    if (!existing) {
+      return c.json({ error: '삭제하려는 항목을 찾을 수 없거나 권한이 없습니다.' }, 404);
+    }
+
+    await db
+      .delete(schema.calculatorHistory)
+      .where(eq(schema.calculatorHistory.id, id));
+
+    return c.json({ success: true, message: '전략 계산 히스토리가 삭제되었습니다.' });
+  } catch (err: any) {
+    return c.json({ error: '히스토리 삭제 중 오류가 발생했습니다: ' + err.message }, 500);
+  }
+});
+
 // Mount Authenticated Router
 app.route('/', authApp);
 

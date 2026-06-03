@@ -30,7 +30,12 @@ import {
   BarChart3,
   Target,
   BookOpen,
-  ChevronDown
+  ChevronDown,
+  Save,
+  History,
+  Edit2,
+  Check,
+  X
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -86,6 +91,20 @@ interface Transaction {
   createdAt: string;
 }
 
+interface CalculatorHistoryItem {
+  id: number;
+  userId: number;
+  ticker: string;
+  period: 'week' | 'month' | 'quarter';
+  basePrice: number;
+  highPrice: number;
+  lowPrice: number;
+  riskReward: number;
+  recStop: number;
+  recTarget: number;
+  createdAt: string;
+}
+
 interface DashboardStats {
   totalRealizedPnL: number;
   totalUnrealizedPnL: number;
@@ -113,7 +132,9 @@ export default function App() {
   const [showPassword, setShowPassword] = useState(false);
 
   // Application UI states
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'portfolio' | 'transactions' | 'calculator'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'portfolio' | 'transactions' | 'calculator'>(
+    (localStorage.getItem('active_tab') as any) || 'dashboard'
+  );
   const [darkMode, setDarkMode] = useState<boolean>(
     localStorage.getItem('theme') === 'dark' ||
     (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)
@@ -153,6 +174,17 @@ export default function App() {
   const [calcHighPrice, setCalcHighPrice] = useState<string>('');
   const [calcLowPrice, setCalcLowPrice] = useState<string>('');
   const [calcRiskReward, setCalcRiskReward] = useState<number>(2.0);
+  const [calcTicker, setCalcTicker] = useState<string>('');
+  const [calcHistory, setCalcHistory] = useState<CalculatorHistoryItem[]>([]);
+  const [editingCalcId, setEditingCalcId] = useState<number | null>(null);
+  
+  // States for editing a history item
+  const [editCalcTicker, setEditCalcTicker] = useState<string>('');
+  const [editCalcPeriod, setEditCalcPeriod] = useState<'week' | 'month' | 'quarter'>('month');
+  const [editCalcBasePrice, setEditCalcBasePrice] = useState<string>('');
+  const [editCalcHighPrice, setEditCalcHighPrice] = useState<string>('');
+  const [editCalcLowPrice, setEditCalcLowPrice] = useState<string>('');
+  const [editCalcRiskReward, setEditCalcRiskReward] = useState<number>(2.0);
 
   // Transaction Filters state
   const [filterTicker, setFilterTicker] = useState('');
@@ -205,6 +237,11 @@ export default function App() {
       localStorage.setItem('theme', 'light');
     }
   }, [darkMode]);
+
+  // Sync active tab with localStorage to persist tab across refreshes
+  useEffect(() => {
+    localStorage.setItem('active_tab', activeTab);
+  }, [activeTab]);
 
   // Auth User check on mount
   useEffect(() => {
@@ -264,6 +301,145 @@ export default function App() {
     }
   };
 
+  // Load Volatility Strategy Calculator History
+  const loadCalcHistory = async () => {
+    try {
+      const res = await fetchWithAuth('/api/calculator/history');
+      if (res.success) {
+        setCalcHistory(res.history);
+      }
+    } catch (err) {
+      console.error('계산 히스토리 로드 실패:', err);
+    }
+  };
+
+  // Save new Volatility calculation history
+  const handleSaveCalcHistory = async (recStop: number, recTarget: number) => {
+    if (!calcTicker || !calcTicker.trim()) {
+      alert('종목 티커명을 입력해 주세요.');
+      return;
+    }
+    if (!calcBasePrice || parseFloat(calcBasePrice) <= 0) {
+      alert('올바른 매입 진입가를 입력해 주세요.');
+      return;
+    }
+    if (!calcHighPrice || parseFloat(calcHighPrice) <= 0) {
+      alert('올바른 최고가를 입력해 주세요.');
+      return;
+    }
+    if (!calcLowPrice || parseFloat(calcLowPrice) <= 0) {
+      alert('올바른 최저가를 입력해 주세요.');
+      return;
+    }
+
+    try {
+      setActionLoading(true);
+      await fetchWithAuth('/api/calculator/history', {
+        method: 'POST',
+        body: JSON.stringify({
+          ticker: calcTicker.trim().toUpperCase(),
+          period: calcPeriod,
+          basePrice: parseFloat(calcBasePrice),
+          highPrice: parseFloat(calcHighPrice),
+          lowPrice: parseFloat(calcLowPrice),
+          riskReward: calcRiskReward,
+          recStop,
+          recTarget
+        })
+      });
+      alert('성공적으로 계산 기록이 저장되었습니다.');
+      setCalcTicker(''); // reset ticker
+      await loadCalcHistory();
+    } catch (err: any) {
+      alert(err.message);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  // Delete calculator history
+  const handleDeleteCalcHistory = async (id: number) => {
+    if (!confirm('이 계산 히스토리 기록을 삭제하시겠습니까?')) return;
+    try {
+      setActionLoading(true);
+      await fetchWithAuth(`/api/calculator/history/${id}`, {
+        method: 'DELETE'
+      });
+      await loadCalcHistory();
+    } catch (err: any) {
+      alert(err.message);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  // Trigger editing state for a calculator history item
+  const handleStartEditCalcHistory = (item: CalculatorHistoryItem) => {
+    setEditingCalcId(item.id);
+    setEditCalcTicker(item.ticker);
+    setEditCalcPeriod(item.period);
+    setEditCalcBasePrice(item.basePrice.toString());
+    setEditCalcHighPrice(item.highPrice.toString());
+    setEditCalcLowPrice(item.lowPrice.toString());
+    setEditCalcRiskReward(item.riskReward);
+  };
+
+  // Save edited calculation history
+  const handleSaveEditCalcHistory = async (id: number) => {
+    const targetBase = parseFloat(editCalcBasePrice);
+    const targetHigh = parseFloat(editCalcHighPrice);
+    const targetLow = parseFloat(editCalcLowPrice);
+
+    if (!editCalcTicker || !editCalcTicker.trim()) {
+      alert('종목 티커를 입력해 주세요.');
+      return;
+    }
+    if (isNaN(targetBase) || targetBase <= 0) {
+      alert('올바른 기준가를 입력해 주세요.');
+      return;
+    }
+    if (isNaN(targetHigh) || targetHigh <= 0) {
+      alert('올바른 최고가를 입력해 주세요.');
+      return;
+    }
+    if (isNaN(targetLow) || targetLow <= 0 || targetHigh <= targetLow) {
+      alert('올바른 최저가 범위를 입력해 주세요.');
+      return;
+    }
+
+    // Recompute recommended Stop & Target in frontend before saving update
+    const volatility = ((targetHigh - targetLow) / targetLow) * 100;
+    let periodCoeff = 0.65;
+    if (editCalcPeriod === 'week') periodCoeff = 0.80;
+    else if (editCalcPeriod === 'quarter') periodCoeff = 0.50;
+
+    const recStop = Math.max(1, Math.min(30, Math.round(volatility * periodCoeff)));
+    const recTarget = Math.max(1, Math.min(50, Math.round(recStop * editCalcRiskReward)));
+
+    try {
+      setActionLoading(true);
+      await fetchWithAuth(`/api/calculator/history/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify({
+          ticker: editCalcTicker.trim().toUpperCase(),
+          period: editCalcPeriod,
+          basePrice: targetBase,
+          highPrice: targetHigh,
+          lowPrice: targetLow,
+          riskReward: editCalcRiskReward,
+          recStop,
+          recTarget
+        })
+      });
+      setEditingCalcId(null);
+      await loadCalcHistory();
+    } catch (err: any) {
+      alert(err.message);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   const loadAllData = async () => {
     try {
       setLoading(true);
@@ -298,6 +474,9 @@ export default function App() {
         setHistoryChart(dashRes.charts.history);
         setAlerts(dashRes.alerts);
       }
+
+      // Load Calculator History
+      await loadCalcHistory();
     } catch (err: any) {
       alert(err.message);
     } finally {
@@ -918,6 +1097,29 @@ export default function App() {
     setTempTargetValue(item.trailingTargetPercent.toString());
     setTempStopValue(item.trailingStopPercent.toString());
   };
+
+  // Render Loading Spinner while restoring auth session
+  if (token && !user) {
+    return (
+      <div className="min-h-screen w-full flex flex-col items-center justify-center bg-slate-950 text-slate-100 font-sans relative overflow-hidden bg-grid-pattern">
+        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-indigo-500/10 rounded-full blur-[120px] pointer-events-none" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-amber-500/5 rounded-full blur-[140px] pointer-events-none" />
+        
+        <div className="flex flex-col items-center gap-4 relative z-10 animate-in fade-in duration-300">
+          <div className="p-4 bg-gradient-to-br from-indigo-500 to-indigo-700 rounded-3xl shadow-xl shadow-indigo-500/20 animate-pulse">
+            <Coins className="w-8 h-8 text-white animate-[spin_3s_linear_infinite]" />
+          </div>
+          <h2 className="text-xl font-extrabold bg-gradient-to-r from-indigo-200 to-amber-200 bg-clip-text text-transparent font-display tracking-widest">
+            FINFOLIO
+          </h2>
+          <div className="flex items-center gap-2 text-xs text-slate-400 mt-1">
+            <RefreshCw className="w-3.5 h-3.5 animate-spin text-indigo-405" />
+            <span>안전한 거래 세션을 복구하고 있습니다...</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Render Login & Signup Form (Stunning Premium Glassmorphic Split-Screen Interface)
   if (!user) {
@@ -2564,20 +2766,33 @@ export default function App() {
         )}
 
         {activeTab === 'calculator' && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start animate-in fade-in slide-in-from-bottom-4 duration-300">
-            
-            {/* Left Col: Inputs */}
-            <div className="glass-panel rounded-3xl p-6 shadow-sm border border-slate-200 dark:border-slate-800/80 space-y-6">
-              <div>
-                <h2 className="text-base font-bold flex items-center gap-2">
-                  <FileSpreadsheet className="w-5 h-5 text-indigo-500" />
-                  <span>변동성 데이터 입력</span>
-                </h2>
-                <p className="text-xs text-slate-400 mt-1">HTS/MTS의 차트 정보를 입력해 분석을 진행합니다.</p>
-              </div>
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start animate-in fade-in slide-in-from-bottom-4 duration-300">
+              
+              {/* Left Col: Inputs */}
+              <div className="glass-panel rounded-3xl p-6 shadow-sm border border-slate-200 dark:border-slate-800/80 space-y-6">
+                <div>
+                  <h2 className="text-base font-bold flex items-center gap-2">
+                    <FileSpreadsheet className="w-5 h-5 text-indigo-500" />
+                    <span>변동성 데이터 입력</span>
+                  </h2>
+                  <p className="text-xs text-slate-400 mt-1">HTS/MTS의 차트 정보를 입력해 분석을 진행합니다.</p>
+                </div>
 
-              <div className="space-y-4 text-xs">
-                {/* 1. Period Selection */}
+                <div className="space-y-4 text-xs">
+                  {/* 0. Ticker Input */}
+                  <div>
+                    <label className="block text-xs font-bold text-slate-400 mb-1">종목 티커 (Ticker) *</label>
+                    <input
+                      type="text"
+                      value={calcTicker}
+                      onChange={(e) => setCalcTicker(e.target.value.toUpperCase())}
+                      placeholder="예: AAPL, SEC"
+                      className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 focus:outline-none focus:border-indigo-500 transition-colors font-semibold"
+                    />
+                  </div>
+
+                  {/* 1. Period Selection */}
                 <div>
                   <label className="block text-xs font-bold text-slate-400 mb-2">기준 분석 기간 *</label>
                   <div className="bg-slate-200/50 dark:bg-slate-900/60 p-1 rounded-xl flex border border-slate-300/30 dark:border-slate-800/85">
@@ -2805,6 +3020,19 @@ export default function App() {
                           </div>
 
                         </div>
+
+                        {/* Save to History Button */}
+                        <div className="pt-4 border-t border-slate-100 dark:border-slate-800/60 mt-6">
+                          <button
+                            type="button"
+                            onClick={() => handleSaveCalcHistory(recStop, recTarget)}
+                            disabled={actionLoading}
+                            className="w-full bg-indigo-500 hover:bg-indigo-650 text-white font-bold py-3 rounded-xl transition-all cursor-pointer text-xs flex items-center justify-center gap-2 shadow-lg shadow-indigo-500/20 dark:shadow-indigo-500/10 disabled:opacity-50"
+                          >
+                            <Save className="w-4 h-4" />
+                            <span>이 계산 결과 히스토리에 저장하기</span>
+                          </button>
+                        </div>
                       </div>
 
                       {/* Simulation Guideline Calculator Card */}
@@ -2865,7 +3093,188 @@ export default function App() {
             </div>
 
           </div>
-        )}
+
+          {/* Bottom Section: Calculation History (Full width) */}
+          <div className="glass-panel rounded-3xl p-6 shadow-sm border border-slate-200 dark:border-slate-800/80 animate-in fade-in duration-300 space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-base font-bold flex items-center gap-2">
+                  <History className="w-5 h-5 text-indigo-500" />
+                  <span>최근 변동성 계산 히스토리</span>
+                </h2>
+                <p className="text-xs text-slate-400 mt-1">저장된 최근 계산 기록들을 모니터링하고 관리합니다.</p>
+              </div>
+              <span className="text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 font-bold px-2 py-0.5 rounded">
+                총 {calcHistory.length}개 기록
+              </span>
+            </div>
+
+            {calcHistory.length > 0 ? (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse text-xs">
+                  <thead>
+                    <tr className="border-b border-slate-200 dark:border-slate-800 text-slate-400 font-semibold">
+                      <th className="py-3 px-4">종목</th>
+                      <th className="py-3 px-4">분석 기간</th>
+                      <th className="py-3 px-4">기준 진입가</th>
+                      <th className="py-3 px-4">최고가 / 최저가</th>
+                      <th className="py-3 px-4">변동폭</th>
+                      <th className="py-3 px-4">목표 손익비</th>
+                      <th className="py-3 px-4">추천 손절폭 / 트리거</th>
+                      <th className="py-3 px-4">스톱가 / 목표가</th>
+                      <th className="py-3 px-4 text-right">관리</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800/40">
+                    {calcHistory.map((item) => {
+                      const isEditing = editingCalcId === item.id;
+                      
+                      // 계산값 계산
+                      const vol = ((item.highPrice - item.lowPrice) / item.lowPrice) * 100;
+                      const stopP = item.basePrice * (1 - item.recStop / 100);
+                      const targetP = item.basePrice * (1 + item.recTarget / 100);
+                      
+                      let periodStr = '1개월 (20일)';
+                      if (item.period === 'week') periodStr = '1주일 (5일)';
+                      if (item.period === 'quarter') periodStr = '3개월 (60일)';
+
+                      if (isEditing) {
+                        return (
+                          <tr key={item.id} className="bg-indigo-500/5 dark:bg-indigo-500/10 animate-in fade-in duration-200">
+                            <td className="py-3 px-4">
+                              <input
+                                type="text"
+                                value={editCalcTicker}
+                                onChange={(e) => setEditCalcTicker(e.target.value.toUpperCase())}
+                                className="w-16 bg-white dark:bg-slate-900 border border-slate-250 dark:border-slate-850 rounded px-2 py-1 font-bold text-center text-slate-800 dark:text-slate-100 focus:outline-none focus:border-indigo-500"
+                              />
+                            </td>
+                            <td className="py-3 px-4">
+                              <select
+                                value={editCalcPeriod}
+                                onChange={(e) => setEditCalcPeriod(e.target.value as any)}
+                                className="bg-white dark:bg-slate-900 border border-slate-250 dark:border-slate-850 rounded px-2 py-1 font-semibold text-slate-800 dark:text-slate-100 focus:outline-none focus:border-indigo-500"
+                              >
+                                <option value="week">1주일</option>
+                                <option value="month">1개월</option>
+                                <option value="quarter">3개월</option>
+                              </select>
+                            </td>
+                            <td className="py-3 px-4">
+                              <input
+                                type="number"
+                                value={editCalcBasePrice}
+                                onChange={(e) => setEditCalcBasePrice(e.target.value)}
+                                className="w-20 bg-white dark:bg-slate-900 border border-slate-250 dark:border-slate-850 rounded px-2 py-1 font-semibold text-right text-slate-800 dark:text-slate-100 focus:outline-none focus:border-indigo-500"
+                              />
+                            </td>
+                            <td className="py-3 px-4">
+                              <div className="flex items-center gap-1">
+                                <input
+                                  type="number"
+                                  value={editCalcHighPrice}
+                                  onChange={(e) => setEditCalcHighPrice(e.target.value)}
+                                  placeholder="고가"
+                                  className="w-20 bg-white dark:bg-slate-900 border border-slate-250 dark:border-slate-850 rounded px-2 py-1 font-semibold text-right text-slate-800 dark:text-slate-100 focus:outline-none focus:border-indigo-500"
+                                />
+                                <span className="text-slate-400">/</span>
+                                <input
+                                  type="number"
+                                  value={editCalcLowPrice}
+                                  onChange={(e) => setEditCalcLowPrice(e.target.value)}
+                                  placeholder="저가"
+                                  className="w-20 bg-white dark:bg-slate-900 border border-slate-250 dark:border-slate-850 rounded px-2 py-1 font-semibold text-right text-slate-800 dark:text-slate-100 focus:outline-none focus:border-indigo-500"
+                                />
+                              </div>
+                            </td>
+                            <td className="py-3 px-4 text-slate-400 font-mono font-bold">-</td>
+                            <td className="py-3 px-4">
+                              <select
+                                value={editCalcRiskReward}
+                                onChange={(e) => setEditCalcRiskReward(parseFloat(e.target.value))}
+                                className="bg-white dark:bg-slate-900 border border-slate-250 dark:border-slate-850 rounded px-2 py-1 font-semibold text-slate-800 dark:text-slate-100 focus:outline-none focus:border-indigo-500"
+                              >
+                                <option value="1.5">1.5배</option>
+                                <option value="2.0">2.0배</option>
+                                <option value="2.5">2.5배</option>
+                              </select>
+                            </td>
+                            <td className="py-3 px-4 text-slate-400 font-mono font-bold">-</td>
+                            <td className="py-3 px-4 text-slate-400 font-mono font-bold">-</td>
+                            <td className="py-3 px-4 text-right">
+                              <div className="flex justify-end gap-2">
+                                <button
+                                  onClick={() => handleSaveEditCalcHistory(item.id)}
+                                  className="bg-indigo-500 text-white px-2.5 py-1 rounded-lg font-bold hover:bg-indigo-650 transition-all cursor-pointer flex items-center gap-1 shadow-sm"
+                                >
+                                  <Check className="w-3.5 h-3.5" />
+                                  <span>저장</span>
+                                </button>
+                                <button
+                                  onClick={() => setEditingCalcId(null)}
+                                  className="bg-slate-250 dark:bg-slate-800 text-slate-650 dark:text-slate-350 px-2.5 py-1 rounded-lg font-bold hover:bg-slate-300 dark:hover:bg-slate-700 transition-all cursor-pointer flex items-center gap-1"
+                                >
+                                  <X className="w-3.5 h-3.5" />
+                                  <span>취소</span>
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      }
+
+                      return (
+                        <tr key={item.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-900/20 transition-colors">
+                          <td className="py-4 px-4 font-bold text-slate-750 dark:text-slate-200">{item.ticker}</td>
+                          <td className="py-4 px-4 text-slate-400 font-semibold">{periodStr}</td>
+                          <td className="py-4 px-4 font-mono font-bold text-slate-700 dark:text-slate-300">{item.basePrice.toLocaleString()}</td>
+                          <td className="py-4 px-4 font-mono font-medium text-slate-500 dark:text-slate-400">
+                            {item.highPrice.toLocaleString()} / {item.lowPrice.toLocaleString()}
+                          </td>
+                          <td className="py-4 px-4 font-mono font-bold text-indigo-550 dark:text-indigo-400">{vol.toFixed(1)}%</td>
+                          <td className="py-4 px-4 font-bold text-slate-650 dark:text-slate-300">{item.riskReward.toFixed(1)}배</td>
+                          <td className="py-4 px-4">
+                            <span className="text-rose-500 font-bold">-{item.recStop}%</span>
+                            <span className="text-slate-400 mx-1">/</span>
+                            <span className="text-indigo-400 font-bold">+{item.recTarget}%</span>
+                          </td>
+                          <td className="py-4 px-4">
+                            <div className="font-mono text-rose-500 font-bold">{Math.round(stopP).toLocaleString()}</div>
+                            <div className="font-mono text-indigo-400 text-[10px] font-bold">{Math.round(targetP).toLocaleString()}</div>
+                          </td>
+                          <td className="py-4 px-4 text-right">
+                            <div className="flex justify-end gap-2">
+                              <button
+                                onClick={() => handleStartEditCalcHistory(item)}
+                                className="text-slate-400 hover:text-indigo-500 dark:hover:text-indigo-400 p-1 transition-colors cursor-pointer"
+                                title="수정"
+                              >
+                                <Edit2 className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteCalcHistory(item.id)}
+                                className="text-slate-400 hover:text-rose-500 dark:hover:text-rose-450 p-1 transition-colors cursor-pointer"
+                                title="삭제"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="py-8 text-center text-slate-400/80 text-xs">
+                최근 계산 히스토리가 비어 있습니다. 위 계산기에서 종목명을 기입하고 결과를 저장해 보세요!
+              </div>
+            )}
+          </div>
+
+        </div>
+      )}
 
       </main>
 
