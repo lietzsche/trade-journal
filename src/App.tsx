@@ -3266,9 +3266,9 @@ export default function App() {
                             <td className="py-4 px-4 font-mono font-bold text-indigo-550 dark:text-indigo-400">{vol.toFixed(1)}%</td>
                             <td className="py-4 px-4 font-bold text-slate-650 dark:text-slate-300">{item.riskReward.toFixed(1)}배</td>
                             <td className="py-4 px-4">
-                              <span className="text-rose-500 font-bold">-{item.recStop}%</span>
+                              <span className="text-rose-500 font-bold">-{Math.round(item.recStop)}%</span>
                               <span className="text-slate-400 mx-1">/</span>
-                              <span className="text-indigo-400 font-bold">+{item.recTarget}%</span>
+                              <span className="text-indigo-400 font-bold">+{Math.round(item.recTarget)}%</span>
                             </td>
                             <td className="py-4 px-4">
                               <div className="font-mono text-rose-500 font-bold">{formatPrice(stopP)}</div>
@@ -3466,7 +3466,7 @@ export default function App() {
                           <div className="bg-rose-50/50 dark:bg-rose-950/15 border border-rose-100/30 dark:border-rose-900/20 rounded-xl p-2 text-center">
                             <div className="flex justify-center items-center gap-1 mb-0.5">
                               <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
-                              <span className="text-[10px] text-rose-600 dark:text-rose-400 font-bold">추천 손절 (-{item.recStop}%)</span>
+                              <span className="text-[10px] text-rose-600 dark:text-rose-400 font-bold">추천 손절 (-{Math.round(item.recStop)}%)</span>
                             </div>
                             <span className="font-mono text-sm font-extrabold text-rose-600 dark:text-rose-400">
                               {formatPrice(stopP)}
@@ -3477,7 +3477,7 @@ export default function App() {
                           <div className="bg-emerald-50/50 dark:bg-emerald-950/15 border border-emerald-100/30 dark:border-emerald-900/20 rounded-xl p-2 text-center">
                             <div className="flex justify-center items-center gap-1 mb-0.5">
                               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                              <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">추천 목표 (+{item.recTarget}%)</span>
+                              <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">추천 목표 (+{Math.round(item.recTarget)}%)</span>
                             </div>
                             <span className="font-mono text-sm font-extrabold text-emerald-600 dark:text-emerald-400">
                               {formatPrice(targetP)}
