@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   TrendingUp,
   TrendingDown,
@@ -135,6 +135,70 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'portfolio' | 'transactions' | 'calculator'>(
     (localStorage.getItem('active_tab') as any) || 'dashboard'
   );
+
+  // Swipe tab navigation logic for mobile devices
+  const swipeTabs: ('dashboard' | 'portfolio' | 'transactions' | 'calculator')[] = [
+    'dashboard',
+    'portfolio',
+    'transactions',
+    'calculator'
+  ];
+  const touchStartRef = useRef<{ x: number; y: number; time: number } | null>(null);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (window.innerWidth >= 768) return;
+    const touch = e.touches[0];
+    touchStartRef.current = {
+      x: touch.clientX,
+      y: touch.clientY,
+      time: Date.now()
+    };
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (window.innerWidth >= 768 || !touchStartRef.current) return;
+    const touch = e.changedTouches[0];
+    const diffX = touch.clientX - touchStartRef.current.x;
+    const diffY = touch.clientY - touchStartRef.current.y;
+    const duration = Date.now() - touchStartRef.current.time;
+
+    // Reset touch start reference
+    touchStartRef.current = null;
+
+    // Reject slow drag actions (duration > 350ms)
+    if (duration > 350) return;
+    // Require substantial horizontal movement (distance > 70px)
+    if (Math.abs(diffX) < 70) return;
+    // Reject vertical scrolling behaviors (vertical movement > horizontal movement)
+    if (Math.abs(diffY) > Math.abs(diffX)) return;
+
+    // Prevent tab swiping on input, slider, select, canvas, modal, or scrollable sub-sections
+    const target = e.target as HTMLElement;
+    if (
+      target.closest('input') ||
+      target.closest('select') ||
+      target.closest('textarea') ||
+      target.closest('canvas') ||
+      target.closest('.overflow-x-auto') ||
+      target.closest('[role="dialog"]') ||
+      target.closest('.no-swipe')
+    ) {
+      return;
+    }
+
+    const currentIndex = swipeTabs.indexOf(activeTab);
+    if (diffX > 0) {
+      // Swipe right: move to previous tab
+      if (currentIndex > 0) {
+        setActiveTab(swipeTabs[currentIndex - 1]);
+      }
+    } else {
+      // Swipe left: move to next tab
+      if (currentIndex < swipeTabs.length - 1) {
+        setActiveTab(swipeTabs[currentIndex + 1]);
+      }
+    }
+  };
   const [darkMode, setDarkMode] = useState<boolean>(
     localStorage.getItem('theme') === 'dark' ||
     (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)
@@ -1564,7 +1628,11 @@ export default function App() {
       </div>
 
       {/* 3. Main Content Container */}
-      <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full py-6">
+      <main
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+        className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full py-6"
+      >
 
         {/* Global Loading Overlay */}
         {loading && portfolio.length === 0 && (
