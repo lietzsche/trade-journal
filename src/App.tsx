@@ -258,6 +258,8 @@ export default function App() {
   const [showGuide, setShowGuide] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
   const [showFilter, setShowFilter] = useState(false);
+  const [showPnLChart, setShowPnLChart] = useState(false);
+  const [showRatioChart, setShowRatioChart] = useState(false);
 
   // Core Data states
   const [portfolio, setPortfolio] = useState<PortfolioItem[]>([]);
@@ -355,7 +357,16 @@ export default function App() {
   // Sync active tab with localStorage to persist tab across refreshes
   useEffect(() => {
     localStorage.setItem('active_tab', activeTab);
+    window.scrollTo({ top: 0, behavior: 'instant' as any });
   }, [activeTab]);
+
+  // Collapsible charts responsiveness (expand on desktop)
+  useEffect(() => {
+    if (window.innerWidth >= 768) {
+      setShowPnLChart(true);
+      setShowRatioChart(true);
+    }
+  }, []);
 
   // Auth User check on mount
   useEffect(() => {
@@ -1703,7 +1714,7 @@ export default function App() {
           {/* ---------------------------------------------------- */}
           {/* Tab 1: DASHBOARD */}
           {/* ---------------------------------------------------- */}
-          <div className="w-1/4 flex-shrink-0 px-1 md:px-0">
+          <div className={`w-1/4 flex-shrink-0 px-1 md:px-0 ${activeTab === 'dashboard' ? 'h-auto' : 'h-0 overflow-hidden'}`}>
             <div className="space-y-6">
             
             {/* Risk Warnings alerts panel */}
@@ -1886,109 +1897,137 @@ export default function App() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               
               {/* Cumulative monthly profit chart */}
-              <div className="glass-panel rounded-3xl p-6 shadow-sm border border-slate-200 dark:border-slate-800/80 lg:col-span-2">
-                <h3 className="text-base font-bold mb-6 flex items-center gap-2">
-                  📈 월별 누적 실현 손익 곡선
-                </h3>
-                <div className="h-72 w-full text-xs">
-                  {historyChart.length > 0 ? (
-                    <ResponsiveContainer width="100%" height="100%">
-                      <AreaChart data={historyChart}>
-                        <defs>
-                          <linearGradient id="colorCumulative" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#6366f1" stopOpacity={0.25}/>
-                            <stop offset="95%" stopColor="#6366f1" stopOpacity={0.01}/>
-                          </linearGradient>
-                        </defs>
-                        <CartesianGrid strokeDasharray="3 3" stroke={darkMode ? '#222638' : '#e2e8f0'} />
-                        <XAxis dataKey="month" stroke={darkMode ? '#94a3b8' : '#64748b'} />
-                        <YAxis stroke={darkMode ? '#94a3b8' : '#64748b'} />
-                        <Tooltip
-                          contentStyle={{
-                            backgroundColor: darkMode ? '#171a26' : '#ffffff',
-                            borderColor: darkMode ? '#222638' : '#cbd5e1',
-                            color: darkMode ? '#f8fafc' : '#0f172a',
-                            borderRadius: '12px',
-                            boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
-                          }}
-                          formatter={(value) => [formatCurrency(Number(value), preferredCurrency), '누적 손익']}
-                        />
-                        <Area
-                          type="monotone"
-                          dataKey="cumulative"
-                          stroke="#6366f1"
-                          strokeWidth={2}
-                          fillOpacity={1}
-                          fill="url(#colorCumulative)"
-                          name={`누적 손익 (${preferredCurrency === 'USD' ? 'USD' : '원'})`}
-                        />
-                      </AreaChart>
-                    </ResponsiveContainer>
-                  ) : (
-                    <div className="h-full flex items-center justify-center text-slate-400">
-                      매매 로그의 매도(SELL) 기록이 쌓이면 실시간 누적 그래프가 그려집니다.
-                    </div>
-                  )}
+              <div className="glass-panel rounded-3xl p-6 shadow-sm border border-slate-200 dark:border-slate-800/80 lg:col-span-2 transition-all">
+                <div 
+                  onClick={() => setShowPnLChart(!showPnLChart)}
+                  className="flex items-center justify-between cursor-pointer select-none mb-4"
+                >
+                  <h3 className="text-base font-bold flex items-center gap-2 mb-0">
+                    <span>📈 월별 누적 실현 손익 곡선</span>
+                  </h3>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-bold text-slate-450 md:hidden">
+                      {showPnLChart ? '접기' : '자세히 보기'}
+                    </span>
+                    <ChevronDown className={`w-4 h-4 text-slate-455 transition-transform duration-200 ${showPnLChart ? 'rotate-180' : ''}`} />
+                  </div>
                 </div>
+
+                {showPnLChart && (
+                  <div className="h-72 w-full text-xs animate-in fade-in duration-200">
+                    {historyChart.length > 0 ? (
+                      <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={historyChart}>
+                          <defs>
+                            <linearGradient id="colorCumulative" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="#6366f1" stopOpacity={0.25}/>
+                              <stop offset="95%" stopColor="#6366f1" stopOpacity={0.01}/>
+                            </linearGradient>
+                          </defs>
+                          <CartesianGrid strokeDasharray="3 3" stroke={darkMode ? '#222638' : '#e2e8f0'} />
+                          <XAxis dataKey="month" stroke={darkMode ? '#94a3b8' : '#64748b'} />
+                          <YAxis stroke={darkMode ? '#94a3b8' : '#64748b'} />
+                          <Tooltip
+                            contentStyle={{
+                              backgroundColor: darkMode ? '#171a26' : '#ffffff',
+                              borderColor: darkMode ? '#222638' : '#cbd5e1',
+                              color: darkMode ? '#f8fafc' : '#0f172a',
+                              borderRadius: '12px',
+                              boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+                            }}
+                            formatter={(value) => [formatCurrency(Number(value), preferredCurrency), '누적 손익']}
+                          />
+                          <Area
+                            type="monotone"
+                            dataKey="cumulative"
+                            stroke="#6366f1"
+                            strokeWidth={2}
+                            fillOpacity={1}
+                            fill="url(#colorCumulative)"
+                            name={`누적 손익 (${preferredCurrency === 'USD' ? 'USD' : '원'})`}
+                          />
+                        </AreaChart>
+                      </ResponsiveContainer>
+                    ) : (
+                      <div className="h-full flex items-center justify-center text-slate-400">
+                        매매 로그의 매도(SELL) 기록이 쌓이면 실시간 누적 그래프가 그려집니다.
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Asset Allocation Chart */}
-              <div className="glass-panel rounded-3xl p-6 shadow-sm border border-slate-200 dark:border-slate-800/80">
-                <h3 className="text-base font-bold mb-6 flex items-center gap-2">
-                  🍰 자산 배분 비중 (Holdings Ratio)
-                </h3>
-                <div className="h-72 w-full flex flex-col items-center justify-center text-xs">
-                  {allocationChart.length > 0 ? (
-                    <>
-                      <div className="h-56 w-full">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <PieChart>
-                            <Pie
-                              data={allocationChart}
-                              cx="50%"
-                              cy="50%"
-                              innerRadius={60}
-                              outerRadius={80}
-                              paddingAngle={3}
-                              dataKey="value"
-                            >
-                              {allocationChart.map((_, index) => (
-                                <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
-                              ))}
-                            </Pie>
-                            <Tooltip
-                              contentStyle={{
-                                backgroundColor: darkMode ? '#171a26' : '#ffffff',
-                                borderColor: darkMode ? '#222638' : '#cbd5e1',
-                                color: darkMode ? '#f8fafc' : '#0f172a',
-                                borderRadius: '12px',
-                                boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
-                              }}
-                              formatter={(value) => formatCurrency(Number(value), preferredCurrency)}
-                            />
-                          </PieChart>
-                        </ResponsiveContainer>
-                      </div>
-                      <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 mt-4 px-2">
-                        {allocationChart.map((entry, index) => (
-                          <div key={entry.name} className="flex items-center gap-1.5">
-                            <div
-                              className="w-2.5 h-2.5 rounded-full"
-                              style={{ backgroundColor: PIE_COLORS[index % PIE_COLORS.length] }}
-                            />
-                            <span className="font-semibold text-slate-500 dark:text-slate-400">
-                              {entry.name} ({((entry.value / dashboardStats.totalPortfolioValue) * 100).toFixed(0)}%)
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    </>
-                  ) : (
-                    <div className="text-slate-400 text-center">
-                      보유 종목이 비어 있어 비중 원형 차트가 존재하지 않습니다.
-                    </div>
-                  )}
+              <div className="glass-panel rounded-3xl p-6 shadow-sm border border-slate-200 dark:border-slate-800/80 transition-all">
+                <div 
+                  onClick={() => setShowRatioChart(!showRatioChart)}
+                  className="flex items-center justify-between cursor-pointer select-none mb-4"
+                >
+                  <h3 className="text-base font-bold flex items-center gap-2 mb-0">
+                    <span>🍰 자산 배분 비중 (Holdings Ratio)</span>
+                  </h3>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-bold text-slate-450 md:hidden">
+                      {showRatioChart ? '접기' : '자세히 보기'}
+                    </span>
+                    <ChevronDown className={`w-4 h-4 text-slate-455 transition-transform duration-200 ${showRatioChart ? 'rotate-180' : ''}`} />
+                  </div>
                 </div>
+
+                {showRatioChart && (
+                  <div className="h-72 w-full flex flex-col items-center justify-center text-xs animate-in fade-in duration-200">
+                    {allocationChart.length > 0 ? (
+                      <>
+                        <div className="h-56 w-full">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <PieChart>
+                              <Pie
+                                data={allocationChart}
+                                cx="50%"
+                                cy="50%"
+                                innerRadius={60}
+                                outerRadius={80}
+                                paddingAngle={3}
+                                dataKey="value"
+                              >
+                                {allocationChart.map((_, index) => (
+                                  <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+                                ))}
+                              </Pie>
+                              <Tooltip
+                                contentStyle={{
+                                  backgroundColor: darkMode ? '#171a26' : '#ffffff',
+                                  borderColor: darkMode ? '#222638' : '#cbd5e1',
+                                  color: darkMode ? '#f8fafc' : '#0f172a',
+                                  borderRadius: '12px',
+                                  boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+                                }}
+                                formatter={(value) => formatCurrency(Number(value), preferredCurrency)}
+                              />
+                            </PieChart>
+                          </ResponsiveContainer>
+                        </div>
+                        <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 mt-4 px-2">
+                          {allocationChart.map((entry, index) => (
+                            <div key={entry.name} className="flex items-center gap-1.5">
+                              <div
+                                className="w-2.5 h-2.5 rounded-full"
+                                style={{ backgroundColor: PIE_COLORS[index % PIE_COLORS.length] }}
+                              />
+                              <span className="font-semibold text-slate-500 dark:text-slate-400">
+                                {entry.name} ({((entry.value / dashboardStats.totalPortfolioValue) * 100).toFixed(0)}%)
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </>
+                    ) : (
+                      <div className="text-slate-400 text-center">
+                        보유 종목이 비어 있어 비중 원형 차트가 존재하지 않습니다.
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
             </div>
@@ -1999,7 +2038,7 @@ export default function App() {
           {/* ---------------------------------------------------- */}
           {/* Tab 2: PORTFOLIO & TRAILING STOP */}
           {/* ---------------------------------------------------- */}
-          <div className="w-1/4 flex-shrink-0 px-1 md:px-0">
+          <div className={`w-1/4 flex-shrink-0 px-1 md:px-0 ${activeTab === 'portfolio' ? 'h-auto' : 'h-0 overflow-hidden'}`}>
             <div className="space-y-6">
 
             {/* Strategy guide banner (Collapsible, collapsed by default) */}
@@ -2467,7 +2506,7 @@ export default function App() {
           {/* ---------------------------------------------------- */}
           {/* Tab 3: TRADE LOGS (Transactions) */}
           {/* ---------------------------------------------------- */}
-          <div className="w-1/4 flex-shrink-0 px-1 md:px-0">
+          <div className={`w-1/4 flex-shrink-0 px-1 md:px-0 ${activeTab === 'transactions' ? 'h-auto' : 'h-0 overflow-hidden'}`}>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
             
             {/* Left Col: Add Transaction Form (Collapsible, collapsed by default) */}
@@ -2920,7 +2959,7 @@ export default function App() {
           {/* ---------------------------------------------------- */}
           {/* Tab 4: CALCULATOR */}
           {/* ---------------------------------------------------- */}
-          <div className="w-1/4 flex-shrink-0 px-1 md:px-0">
+          <div className={`w-1/4 flex-shrink-0 px-1 md:px-0 ${activeTab === 'calculator' ? 'h-auto' : 'h-0 overflow-hidden'}`}>
             <div className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
               
