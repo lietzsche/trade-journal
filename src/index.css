@@ -22,6 +22,15 @@
   body.dark {
     @apply bg-slate-950 text-slate-100;
   }
+  input, select, textarea {
+    @apply transition-all duration-200 outline-none;
+  }
+  input:focus, select:focus, textarea:focus {
+    @apply border-indigo-500 ring-2 ring-indigo-500/15 shadow-[0_0_12px_rgba(99,102,241,0.08)];
+  }
+  button, [role="button"] {
+    @apply transition-all duration-200 active:scale-[0.98];
+  }
 }
 
 /* Custom Scrollbar */
@@ -62,6 +71,14 @@
 /* Card Glow Effect */
 .glow-card {
   position: relative;
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s ease, border-color 0.4s ease;
+}
+.glow-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 36px -12px rgba(99, 102, 241, 0.12), 0 8px 16px -8px rgba(0, 0, 0, 0.04);
+}
+.dark .glow-card:hover {
+  box-shadow: 0 24px 48px -16px rgba(0, 0, 0, 0.5), 0 8px 16px -8px rgba(99, 102, 241, 0.08);
 }
 .glow-card::after {
   content: '';
@@ -77,6 +94,17 @@
 }
 .dark .glow-card::after {
   background: linear-gradient(to bottom right, rgba(99, 102, 241, 0.2), transparent, rgba(245, 158, 11, 0.05));
+}
+
+/* Global Table Row Hover Glow */
+tbody tr {
+  transition: background-color 0.2s ease, opacity 0.2s ease;
+}
+tbody tr:hover {
+  background-color: rgba(99, 102, 241, 0.02) !important;
+}
+.dark tbody tr:hover {
+  background-color: rgba(255, 255, 255, 0.01) !important;
 }
 
 /* Premium Cyber Grid Pattern */

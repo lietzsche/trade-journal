@@ -26,7 +26,11 @@ import {
   ChevronRight,
   FileSpreadsheet,
   FileText,
-  Copy
+  Copy,
+  BarChart3,
+  Target,
+  BookOpen,
+  ChevronDown
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -1172,7 +1176,7 @@ export default function App() {
   }
 
   // Color arrays for Recharts
-  const PIE_COLORS = ['#6366f1', '#f59e0b', '#10b981', '#f43f5e', '#8b5cf6', '#06b6d4', '#ec4899', '#3b82f6'];
+  const PIE_COLORS = ['#818cf8', '#fbbf24', '#34d399', '#fb7185', '#a78bfa', '#22d3ee', '#f472b6', '#60a5fa'];
 
   // Main UI Render (Authenticated View)
   return (
@@ -1239,7 +1243,7 @@ export default function App() {
                 : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 font-semibold'
             }`}
           >
-            <span>📊</span>
+            <BarChart3 className="w-4 h-4" />
             <span className="hidden sm:inline">대시보드 통계</span>
             <span className="sm:hidden">대시보드</span>
           </button>
@@ -1251,7 +1255,7 @@ export default function App() {
                 : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 font-semibold'
             }`}
           >
-            <span>🎯</span>
+            <Target className="w-4 h-4" />
             <span className="hidden sm:inline">보유 자산 & 트레일링 스톱</span>
             <span className="sm:hidden">보유자산</span>
           </button>
@@ -1263,7 +1267,7 @@ export default function App() {
                 : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 font-semibold'
             }`}
           >
-            <span>📝</span>
+            <FileText className="w-4 h-4" />
             <span className="hidden sm:inline">매매 거래 일지</span>
             <span className="sm:hidden">거래일지</span>
           </button>
@@ -1590,7 +1594,7 @@ export default function App() {
                 className="flex items-center justify-between cursor-pointer select-none"
               >
                 <h3 className="text-xs sm:text-sm font-extrabold text-indigo-600 dark:text-indigo-400 flex items-center gap-2">
-                  <span>⚠️</span>
+                  <BookOpen className="w-4 h-4 text-indigo-500 dark:text-indigo-400" />
                   <span>트레일링 스톱(Trailing Stop) 전략 안내 및 공식</span>
                 </h3>
                 <div className="flex items-center gap-2">
@@ -1607,7 +1611,7 @@ export default function App() {
                   </button>
                   <button className="text-[10px] sm:text-xs font-bold bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 px-3 py-1.5 rounded-xl border border-indigo-500/20 hover:bg-indigo-500/20 transition-all flex items-center gap-1 cursor-pointer">
                     <span>{showGuide ? '접기' : '자세히 보기'}</span>
-                    <span className={`transform transition-transform duration-300 ${showGuide ? 'rotate-180' : ''}`}>▼</span>
+                    <ChevronDown className={`w-3.5 h-3.5 transform transition-transform duration-300 ${showGuide ? 'rotate-180' : ''}`} />
                   </button>
                 </div>
               </div>
@@ -1650,7 +1654,10 @@ export default function App() {
             <div className="glass-panel rounded-3xl overflow-hidden shadow-sm border border-slate-200 dark:border-slate-800/80">
               <div className="p-6 border-b border-slate-200 dark:border-slate-800/80 flex items-center justify-between flex-wrap gap-4 bg-slate-100/40 dark:bg-slate-900/20">
                 <div>
-                  <h2 className="text-lg font-bold">🎯 실시간 보유 자산 모니터링</h2>
+                  <h2 className="text-lg font-bold flex items-center gap-2">
+                    <Target className="w-5 h-5 text-indigo-500 dark:text-indigo-400 animate-pulse" />
+                    <span>실시간 보유 자산 모니터링</span>
+                  </h2>
                   <p className="text-xs text-slate-400 mt-1">현재 주가를 수정하면 손절선과 차기 목표가가 자동 계산됩니다.</p>
                 </div>
                 <div className="text-xs text-slate-500 font-semibold bg-white dark:bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800">
@@ -1939,12 +1946,12 @@ export default function App() {
                 className="flex items-center justify-between cursor-pointer select-none"
               >
                 <h2 className="text-xs sm:text-sm font-extrabold flex items-center gap-2 text-slate-800 dark:text-slate-100">
-                  <span>✍️</span>
+                  <FileText className="w-4 h-4 text-indigo-500 dark:text-indigo-400" />
                   <span>신규 매매 거래 일지 작성</span>
                 </h2>
                 <button className="text-[10px] sm:text-xs font-bold bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 px-3 py-1.5 rounded-xl border border-indigo-500/20 hover:bg-indigo-500/20 transition-all flex items-center gap-1 cursor-pointer">
                   <span>{showAddForm ? '접기' : '작성하기'}</span>
-                  <span className={`transform transition-transform duration-300 ${showAddForm ? 'rotate-180' : ''}`}>▼</span>
+                  <ChevronDown className={`w-3.5 h-3.5 transform transition-transform duration-300 ${showAddForm ? 'rotate-180' : ''}`} />
                 </button>
               </div>
 
@@ -2116,11 +2123,11 @@ export default function App() {
                 >
                   <div className="flex items-center gap-2 text-slate-800 dark:text-slate-100">
                     <Filter className="w-4 h-4 text-indigo-400" />
-                    <h3 className="text-xs sm:text-sm font-bold">🔍 거래 목록 필터 조건 검색</h3>
+                    <h3 className="text-xs sm:text-sm font-bold">거래 목록 필터 조건 검색</h3>
                   </div>
                   <button className="text-[10px] sm:text-xs font-bold bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 px-3 py-1.5 rounded-xl border border-indigo-500/20 hover:bg-indigo-500/20 transition-all flex items-center gap-1 cursor-pointer">
                     <span>{showFilter ? '접기' : '필터 열기'}</span>
-                    <span className={`transform transition-transform duration-300 ${showFilter ? 'rotate-180' : ''}`}>▼</span>
+                    <ChevronDown className={`w-3.5 h-3.5 transform transition-transform duration-300 ${showFilter ? 'rotate-180' : ''}`} />
                   </button>
                 </div>
 
