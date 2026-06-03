@@ -23,7 +23,9 @@ import {
   EyeOff,
   Sparkles,
   ArrowRight,
-  ChevronRight
+  ChevronRight,
+  FileSpreadsheet,
+  FileText
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -289,6 +291,342 @@ export default function App() {
       return '$' + Number(val).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
     return Number(val).toLocaleString('ko-KR') + '원';
+  };
+
+  const handleDownloadExcel = () => {
+    if (transactions.length === 0) {
+      alert('다운로드할 거래 내역이 없습니다.');
+      return;
+    }
+
+    const headers = ['거래일자', '종목', '구분', '체결 단가', '체결 수량', '합계 금액', '수수료', '통화', '메모'];
+    const csvRows = [
+      headers.join(',')
+    ];
+
+    transactions.forEach(tx => {
+      const row = [
+        tx.tradeDate,
+        tx.ticker,
+        tx.type === 'BUY' ? '매수' : '매도',
+        tx.price,
+        tx.quantity,
+        tx.price * tx.quantity,
+        tx.fee,
+        tx.currency,
+        // Escape quotes and wrap in quotes for CSV safety
+        `"${(tx.memo || '').replace(/"/g, '""')}"`
+      ];
+      csvRows.push(row.join(','));
+    });
+
+    const csvContent = '\uFEFF' + csvRows.join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `거래일지_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleDownloadPDF = () => {
+    if (transactions.length === 0) {
+      alert('다운로드할 거래 내역이 없습니다.');
+      return;
+    }
+
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      alert('팝업 차단이 활성화되어 있어 인쇄 창을 열 수 없습니다. 팝업 차단을 해제해주세요.');
+      return;
+    }
+
+    const convertToPreferred = (amount: number, fromCurrency: 'KRW' | 'USD') => {
+      if (fromCurrency === preferredCurrency) return amount;
+      if (preferredCurrency === 'KRW' && fromCurrency === 'USD') {
+        return amount * exchangeRate;
+      }
+      if (preferredCurrency === 'USD' && fromCurrency === 'KRW') {
+        return amount / (exchangeRate || 1300);
+      }
+      return amount;
+    };
+
+    let rowsHtml = '';
+    let totalBuyAmount = 0;
+    let totalSellAmount = 0;
+    let totalFee = 0;
+
+    transactions.forEach(tx => {
+      const amount = tx.price * tx.quantity;
+      const amountInPreferred = convertToPreferred(amount, tx.currency);
+      const feeInPreferred = convertToPreferred(tx.fee, tx.currency);
+
+      if (tx.type === 'BUY') {
+        totalBuyAmount += amountInPreferred;
+      } else {
+        totalSellAmount += amountInPreferred;
+      }
+      totalFee += feeInPreferred;
+
+      const formattedPrice = formatCurrency(tx.price, tx.currency);
+      const formattedAmount = formatCurrency(amount, tx.currency);
+      const formattedFee = formatCurrency(tx.fee, tx.currency);
+      
+      rowsHtml += `
+        <tr>
+          <td>${tx.tradeDate}</td>
+          <td style="font-weight: 700; color: #1e293b;">${tx.ticker}</td>
+          <td style="text-align: center;">
+            <span class="badge ${tx.type.toLowerCase()}">${tx.type === 'BUY' ? '매수' : '매도'}</span>
+          </td>
+          <td class="text-right font-mono">${formattedPrice}</td>
+          <td class="text-right font-mono">${tx.quantity.toLocaleString()}개</td>
+          <td class="text-right font-mono" style="font-weight: 700;">${formattedAmount}</td>
+          <td class="text-right font-mono" style="color: #64748b;">${formattedFee}</td>
+          <td>${tx.memo || '-'}</td>
+        </tr>
+      `;
+    });
+
+    const todayStr = new Date().toLocaleDateString('ko-KR', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+
+    const netRealized = totalSellAmount - totalBuyAmount - totalFee;
+
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>거래일지 내역서 - ${user?.nickname || '사용자'}</title>
+        <meta charset="utf-8">
+        <style>
+          @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+KR:wght@400;500;700;900&display=swap');
+          
+          body {
+            font-family: 'Inter', 'Noto Sans KR', sans-serif;
+            color: #1e293b;
+            margin: 0;
+            padding: 40px;
+            line-height: 1.5;
+            background-color: #ffffff;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+          }
+          
+          .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+          }
+          
+          .title-container h1 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: 800;
+            color: #4f46e5;
+            letter-spacing: -0.5px;
+          }
+          
+          .title-container p {
+            margin: 5px 0 0 0;
+            font-size: 11px;
+            color: #64748b;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+          }
+          
+          .meta-info {
+            text-align: right;
+            font-size: 11px;
+            color: #64748b;
+            line-height: 1.6;
+          }
+          
+          .meta-info strong {
+            color: #1e293b;
+          }
+          
+          .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 30px;
+          }
+          
+          .summary-card {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 15px;
+          }
+          
+          .summary-card .label {
+            font-size: 10px;
+            font-weight: 700;
+            color: #64748b;
+            margin-bottom: 6px;
+          }
+          
+          .summary-card .value {
+            font-size: 14px;
+            font-weight: 800;
+            color: #1e293b;
+          }
+          
+          table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 11px;
+            margin-bottom: 30px;
+          }
+          
+          th {
+            background-color: #f1f5f9;
+            color: #475569;
+            font-weight: 700;
+            padding: 10px 12px;
+            border-bottom: 1px solid #cbd5e1;
+          }
+          
+          td {
+            padding: 12px;
+            border-bottom: 1px solid #e2e8f0;
+            color: #334155;
+          }
+          
+          tr:nth-child(even) {
+            background-color: #f8fafc;
+          }
+          
+          .text-right {
+            text-align: right;
+          }
+          
+          .font-mono {
+            font-family: 'Inter', monospace;
+          }
+          
+          .badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 9px;
+            font-weight: 800;
+          }
+          
+          .badge.buy {
+            background-color: #d1fae5 !important;
+            color: #065f46 !important;
+            border: 1px solid #a7f3d0;
+          }
+          
+          .badge.sell {
+            background-color: #fee2e2 !important;
+            color: #991b1b !important;
+            border: 1px solid #fecaca;
+          }
+          
+          .footer {
+            margin-top: 50px;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 20px;
+            text-align: center;
+            font-size: 10px;
+            color: #94a3b8;
+          }
+          
+          @media print {
+            body {
+              padding: 20px;
+            }
+            /* Clean page breaks */
+            tr {
+              page-break-inside: avoid;
+            }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div class="title-container">
+            <h1>📈 거래내역 일지 보고서</h1>
+            <p>Antigravity Stop Strategy Asset Logger</p>
+          </div>
+          <div class="meta-info">
+            <div>출력 일시: <strong>${todayStr}</strong></div>
+            <div>작성자: <strong>${user?.nickname || '사용자'} (${user?.email || ''})</strong></div>
+            <div>총 거래 건수: <strong>${transactions.length}건</strong></div>
+            <div>기본 통화: <strong>${preferredCurrency === 'USD' ? 'USD ($)' : 'KRW (원)'}</strong></div>
+          </div>
+        </div>
+        
+        <div class="summary-grid">
+          <div class="summary-card">
+            <div class="label">총 매수 금액 (환산)</div>
+            <div class="value" style="color: #059669;">${formatCurrency(totalBuyAmount, preferredCurrency)}</div>
+          </div>
+          <div class="summary-card">
+            <div class="label">총 매도 금액 (환산)</div>
+            <div class="value" style="color: #dc2626;">${formatCurrency(totalSellAmount, preferredCurrency)}</div>
+          </div>
+          <div class="summary-card">
+            <div class="label">총 거래 수수료 (환산)</div>
+            <div class="value" style="color: #4b5563;">${formatCurrency(totalFee, preferredCurrency)}</div>
+          </div>
+          <div class="summary-card">
+            <div class="label">순 실현 손익 (추정)</div>
+            <div class="value" style="color: ${netRealized >= 0 ? '#2563eb' : '#dc2626'}">
+              ${netRealized >= 0 ? '+' : ''}${formatCurrency(netRealized, preferredCurrency)}
+            </div>
+          </div>
+        </div>
+        
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 12%;">거래 날짜</th>
+              <th style="width: 12%;">종목</th>
+              <th style="width: 8%; text-align: center;">구분</th>
+              <th style="width: 15%; text-align: right;">체결 단가</th>
+              <th style="width: 10%; text-align: right;">체결 수량</th>
+              <th style="width: 18%; text-align: right;">합계 금액</th>
+              <th style="width: 10%; text-align: right;">수수료</th>
+              <th style="width: 15%;">메모</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rowsHtml}
+          </tbody>
+        </table>
+        
+        <div class="footer">
+          <p>본 보고서는 Antigravity 거래일지 서비스에서 생성되었습니다. © 2026 Antigravity. All rights reserved.</p>
+        </div>
+        
+        <script>
+          window.onload = function() {
+            setTimeout(function() {
+              window.print();
+            }, 300);
+          };
+        </script>
+      </body>
+      </html>
+    `);
+    printWindow.document.close();
   };
 
   // Auth Action Handlers
@@ -1786,9 +2124,31 @@ export default function App() {
 
               {/* Transactions List Table */}
               <div className="glass-panel rounded-3xl overflow-hidden shadow-sm border border-slate-200 dark:border-slate-800/80">
-                <div className="p-4 bg-slate-100/40 dark:bg-slate-900/20 border-b border-slate-200 dark:border-slate-800/80 flex justify-between items-center text-xs">
-                  <span className="font-extrabold text-slate-700 dark:text-slate-300">📋 거래내역 일지 로그</span>
-                  <span className="text-slate-400">총 {transactions.length}건</span>
+                <div className="p-4 bg-slate-100/40 dark:bg-slate-900/20 border-b border-slate-200 dark:border-slate-800/80 flex flex-col sm:flex-row gap-2 sm:gap-0 justify-between sm:items-center text-xs">
+                  <div className="flex items-center gap-2">
+                    <span className="font-extrabold text-slate-700 dark:text-slate-300">📋 거래내역 일지 로그</span>
+                    <span className="text-slate-400">총 {transactions.length}건</span>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button
+                      onClick={handleDownloadExcel}
+                      disabled={transactions.length === 0}
+                      className="px-2.5 py-1.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 rounded-xl border border-emerald-500/20 transition-all text-[11px] font-bold flex items-center gap-1 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                      title="엑셀(CSV) 파일로 내보내기"
+                    >
+                      <FileSpreadsheet className="w-3.5 h-3.5" />
+                      <span>Excel 다운로드</span>
+                    </button>
+                    <button
+                      onClick={handleDownloadPDF}
+                      disabled={transactions.length === 0}
+                      className="px-2.5 py-1.5 bg-rose-500/10 text-rose-600 dark:text-rose-400 hover:bg-rose-500/20 rounded-xl border border-rose-500/20 transition-all text-[11px] font-bold flex items-center gap-1 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                      title="인쇄 및 PDF 다운로드"
+                    >
+                      <FileText className="w-3.5 h-3.5" />
+                      <span>PDF 다운로드</span>
+                    </button>
+                  </div>
                 </div>
                 
                 {/* Desktop table view (Visible on desktop, hidden on mobile) */}
