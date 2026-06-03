@@ -3110,162 +3110,331 @@ export default function App() {
             </div>
 
             {calcHistory.length > 0 ? (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse text-xs">
-                  <thead>
-                    <tr className="border-b border-slate-200 dark:border-slate-800 text-slate-400 font-semibold">
-                      <th className="py-3 px-4">종목</th>
-                      <th className="py-3 px-4">분석 기간</th>
-                      <th className="py-3 px-4">기준 진입가</th>
-                      <th className="py-3 px-4">최고가 / 최저가</th>
-                      <th className="py-3 px-4">변동폭</th>
-                      <th className="py-3 px-4">목표 손익비</th>
-                      <th className="py-3 px-4">추천 손절폭 / 트리거</th>
-                      <th className="py-3 px-4">스톱가 / 목표가</th>
-                      <th className="py-3 px-4 text-right">관리</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800/40">
-                    {calcHistory.map((item) => {
-                      const isEditing = editingCalcId === item.id;
-                      
-                      // 계산값 계산
-                      const vol = ((item.highPrice - item.lowPrice) / item.lowPrice) * 100;
-                      const stopP = item.basePrice * (1 - item.recStop / 100);
-                      const targetP = item.basePrice * (1 + item.recTarget / 100);
-                      
-                      let periodStr = '1개월 (20일)';
-                      if (item.period === 'week') periodStr = '1주일 (5일)';
-                      if (item.period === 'quarter') periodStr = '3개월 (60일)';
+              <>
+                {/* Desktop table view (Visible on desktop, hidden on mobile) */}
+                <div className="hidden md:block overflow-x-auto">
+                  <table className="w-full text-left border-collapse text-xs">
+                    <thead>
+                      <tr className="border-b border-slate-200 dark:border-slate-800 text-slate-400 font-semibold">
+                        <th className="py-3 px-4">종목</th>
+                        <th className="py-3 px-4">분석 기간</th>
+                        <th className="py-3 px-4">기준 진입가</th>
+                        <th className="py-3 px-4">최고가 / 최저가</th>
+                        <th className="py-3 px-4">변동폭</th>
+                        <th className="py-3 px-4">목표 손익비</th>
+                        <th className="py-3 px-4">추천 손절폭 / 트리거</th>
+                        <th className="py-3 px-4">스톱가 / 목표가</th>
+                        <th className="py-3 px-4 text-right">관리</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800/40">
+                      {calcHistory.map((item) => {
+                        const isEditing = editingCalcId === item.id;
+                        
+                        // 계산값 계산
+                        const vol = ((item.highPrice - item.lowPrice) / item.lowPrice) * 100;
+                        const stopP = item.basePrice * (1 - item.recStop / 100);
+                        const targetP = item.basePrice * (1 + item.recTarget / 100);
+                        
+                        let periodStr = '1개월 (20일)';
+                        if (item.period === 'week') periodStr = '1주일 (5일)';
+                        if (item.period === 'quarter') periodStr = '3개월 (60일)';
 
-                      if (isEditing) {
+                        if (isEditing) {
+                          return (
+                            <tr key={item.id} className="bg-indigo-500/5 dark:bg-indigo-500/10 animate-in fade-in duration-200">
+                              <td className="py-3 px-4">
+                                <input
+                                  type="text"
+                                  value={editCalcTicker}
+                                  onChange={(e) => setEditCalcTicker(e.target.value.toUpperCase())}
+                                  className="w-16 bg-white dark:bg-slate-900 border border-slate-250 dark:border-slate-850 rounded px-2 py-1 font-bold text-center text-slate-800 dark:text-slate-100 focus:outline-none focus:border-indigo-500"
+                                />
+                              </td>
+                              <td className="py-3 px-4">
+                                <select
+                                  value={editCalcPeriod}
+                                  onChange={(e) => setEditCalcPeriod(e.target.value as any)}
+                                  className="bg-white dark:bg-slate-900 border border-slate-250 dark:border-slate-850 rounded px-2 py-1 font-semibold text-slate-800 dark:text-slate-100 focus:outline-none focus:border-indigo-500"
+                                >
+                                  <option value="week">1주일</option>
+                                  <option value="month">1개월</option>
+                                  <option value="quarter">3개월</option>
+                                </select>
+                              </td>
+                              <td className="py-3 px-4">
+                                <input
+                                  type="number"
+                                  value={editCalcBasePrice}
+                                  onChange={(e) => setEditCalcBasePrice(e.target.value)}
+                                  className="w-20 bg-white dark:bg-slate-900 border border-slate-250 dark:border-slate-850 rounded px-2 py-1 font-semibold text-right text-slate-800 dark:text-slate-100 focus:outline-none focus:border-indigo-500"
+                                />
+                              </td>
+                              <td className="py-3 px-4">
+                                <div className="flex items-center gap-1">
+                                  <input
+                                    type="number"
+                                    value={editCalcHighPrice}
+                                    onChange={(e) => setEditCalcHighPrice(e.target.value)}
+                                    placeholder="고가"
+                                    className="w-20 bg-white dark:bg-slate-900 border border-slate-250 dark:border-slate-850 rounded px-2 py-1 font-semibold text-right text-slate-800 dark:text-slate-100 focus:outline-none focus:border-indigo-500"
+                                  />
+                                  <span className="text-slate-400">/</span>
+                                  <input
+                                    type="number"
+                                    value={editCalcLowPrice}
+                                    onChange={(e) => setEditCalcLowPrice(e.target.value)}
+                                    placeholder="저가"
+                                    className="w-20 bg-white dark:bg-slate-900 border border-slate-250 dark:border-slate-850 rounded px-2 py-1 font-semibold text-right text-slate-800 dark:text-slate-100 focus:outline-none focus:border-indigo-500"
+                                  />
+                                </div>
+                              </td>
+                              <td className="py-3 px-4 text-slate-400 font-mono font-bold">-</td>
+                              <td className="py-3 px-4">
+                                <select
+                                  value={editCalcRiskReward}
+                                  onChange={(e) => setEditCalcRiskReward(parseFloat(e.target.value))}
+                                  className="bg-white dark:bg-slate-900 border border-slate-250 dark:border-slate-850 rounded px-2 py-1 font-semibold text-slate-800 dark:text-slate-100 focus:outline-none focus:border-indigo-500"
+                                >
+                                  <option value={1.5}>1.5배</option>
+                                  <option value={2.0}>2.0배</option>
+                                  <option value={2.5}>2.5배</option>
+                                </select>
+                              </td>
+                              <td className="py-3 px-4 text-slate-400 font-mono font-bold">-</td>
+                              <td className="py-3 px-4 text-slate-400 font-mono font-bold">-</td>
+                              <td className="py-3 px-4 text-right">
+                                <div className="flex justify-end gap-2">
+                                  <button
+                                    onClick={() => handleSaveEditCalcHistory(item.id)}
+                                    className="bg-indigo-500 text-white px-2.5 py-1 rounded-lg font-bold hover:bg-indigo-650 transition-all cursor-pointer flex items-center gap-1 shadow-sm"
+                                  >
+                                    <Check className="w-3.5 h-3.5" />
+                                    <span>저장</span>
+                                  </button>
+                                  <button
+                                    onClick={() => setEditingCalcId(null)}
+                                    className="bg-slate-250 dark:bg-slate-800 text-slate-650 dark:text-slate-350 px-2.5 py-1 rounded-lg font-bold hover:bg-slate-300 dark:hover:bg-slate-700 transition-all cursor-pointer flex items-center gap-1"
+                                  >
+                                    <X className="w-3.5 h-3.5" />
+                                    <span>취소</span>
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        }
+
                         return (
-                          <tr key={item.id} className="bg-indigo-500/5 dark:bg-indigo-500/10 animate-in fade-in duration-200">
-                            <td className="py-3 px-4">
-                              <input
-                                type="text"
-                                value={editCalcTicker}
-                                onChange={(e) => setEditCalcTicker(e.target.value.toUpperCase())}
-                                className="w-16 bg-white dark:bg-slate-900 border border-slate-250 dark:border-slate-850 rounded px-2 py-1 font-bold text-center text-slate-800 dark:text-slate-100 focus:outline-none focus:border-indigo-500"
-                              />
+                          <tr key={item.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-900/20 transition-colors">
+                            <td className="py-4 px-4 font-bold text-slate-750 dark:text-slate-200">{item.ticker}</td>
+                            <td className="py-4 px-4 text-slate-400 font-semibold">{periodStr}</td>
+                            <td className="py-4 px-4 font-mono font-bold text-slate-700 dark:text-slate-300">{item.basePrice.toLocaleString()}</td>
+                            <td className="py-4 px-4 font-mono font-medium text-slate-500 dark:text-slate-400">
+                              {item.highPrice.toLocaleString()} / {item.lowPrice.toLocaleString()}
                             </td>
-                            <td className="py-3 px-4">
-                              <select
-                                value={editCalcPeriod}
-                                onChange={(e) => setEditCalcPeriod(e.target.value as any)}
-                                className="bg-white dark:bg-slate-900 border border-slate-250 dark:border-slate-850 rounded px-2 py-1 font-semibold text-slate-800 dark:text-slate-100 focus:outline-none focus:border-indigo-500"
-                              >
-                                <option value="week">1주일</option>
-                                <option value="month">1개월</option>
-                                <option value="quarter">3개월</option>
-                              </select>
+                            <td className="py-4 px-4 font-mono font-bold text-indigo-550 dark:text-indigo-400">{vol.toFixed(1)}%</td>
+                            <td className="py-4 px-4 font-bold text-slate-650 dark:text-slate-300">{item.riskReward.toFixed(1)}배</td>
+                            <td className="py-4 px-4">
+                              <span className="text-rose-500 font-bold">-{item.recStop}%</span>
+                              <span className="text-slate-400 mx-1">/</span>
+                              <span className="text-indigo-400 font-bold">+{item.recTarget}%</span>
                             </td>
-                            <td className="py-3 px-4">
-                              <input
-                                type="number"
-                                value={editCalcBasePrice}
-                                onChange={(e) => setEditCalcBasePrice(e.target.value)}
-                                className="w-20 bg-white dark:bg-slate-900 border border-slate-250 dark:border-slate-850 rounded px-2 py-1 font-semibold text-right text-slate-800 dark:text-slate-100 focus:outline-none focus:border-indigo-500"
-                              />
+                            <td className="py-4 px-4">
+                              <div className="font-mono text-rose-500 font-bold">{Math.round(stopP).toLocaleString()}</div>
+                              <div className="font-mono text-indigo-400 text-[10px] font-bold">{Math.round(targetP).toLocaleString()}</div>
                             </td>
-                            <td className="py-3 px-4">
-                              <div className="flex items-center gap-1">
-                                <input
-                                  type="number"
-                                  value={editCalcHighPrice}
-                                  onChange={(e) => setEditCalcHighPrice(e.target.value)}
-                                  placeholder="고가"
-                                  className="w-20 bg-white dark:bg-slate-900 border border-slate-250 dark:border-slate-850 rounded px-2 py-1 font-semibold text-right text-slate-800 dark:text-slate-100 focus:outline-none focus:border-indigo-500"
-                                />
-                                <span className="text-slate-400">/</span>
-                                <input
-                                  type="number"
-                                  value={editCalcLowPrice}
-                                  onChange={(e) => setEditCalcLowPrice(e.target.value)}
-                                  placeholder="저가"
-                                  className="w-20 bg-white dark:bg-slate-900 border border-slate-250 dark:border-slate-850 rounded px-2 py-1 font-semibold text-right text-slate-800 dark:text-slate-100 focus:outline-none focus:border-indigo-500"
-                                />
-                              </div>
-                            </td>
-                            <td className="py-3 px-4 text-slate-400 font-mono font-bold">-</td>
-                            <td className="py-3 px-4">
-                              <select
-                                value={editCalcRiskReward}
-                                onChange={(e) => setEditCalcRiskReward(parseFloat(e.target.value))}
-                                className="bg-white dark:bg-slate-900 border border-slate-250 dark:border-slate-850 rounded px-2 py-1 font-semibold text-slate-800 dark:text-slate-100 focus:outline-none focus:border-indigo-500"
-                              >
-                                <option value={1.5}>1.5배</option>
-                                <option value={2.0}>2.0배</option>
-                                <option value={2.5}>2.5배</option>
-                              </select>
-                            </td>
-                            <td className="py-3 px-4 text-slate-400 font-mono font-bold">-</td>
-                            <td className="py-3 px-4 text-slate-400 font-mono font-bold">-</td>
-                            <td className="py-3 px-4 text-right">
+                            <td className="py-4 px-4 text-right">
                               <div className="flex justify-end gap-2">
                                 <button
-                                  onClick={() => handleSaveEditCalcHistory(item.id)}
-                                  className="bg-indigo-500 text-white px-2.5 py-1 rounded-lg font-bold hover:bg-indigo-650 transition-all cursor-pointer flex items-center gap-1 shadow-sm"
+                                  onClick={() => handleStartEditCalcHistory(item)}
+                                  className="text-slate-400 hover:text-indigo-500 dark:hover:text-indigo-400 p-1 transition-colors cursor-pointer"
+                                  title="수정"
                                 >
-                                  <Check className="w-3.5 h-3.5" />
-                                  <span>저장</span>
+                                  <Edit2 className="w-4 h-4" />
                                 </button>
                                 <button
-                                  onClick={() => setEditingCalcId(null)}
-                                  className="bg-slate-250 dark:bg-slate-800 text-slate-650 dark:text-slate-350 px-2.5 py-1 rounded-lg font-bold hover:bg-slate-300 dark:hover:bg-slate-700 transition-all cursor-pointer flex items-center gap-1"
+                                  onClick={() => handleDeleteCalcHistory(item.id)}
+                                  className="text-slate-400 hover:text-rose-500 dark:hover:text-rose-450 p-1 transition-colors cursor-pointer"
+                                  title="삭제"
                                 >
-                                  <X className="w-3.5 h-3.5" />
-                                  <span>취소</span>
+                                  <Trash2 className="w-4 h-4" />
                                 </button>
                               </div>
                             </td>
                           </tr>
                         );
-                      }
+                      })}
+                    </tbody>
+                  </table>
+                </div>
 
+                {/* Mobile stacked list view (Visible on mobile, hidden on desktop, no horizontal scroll) */}
+                <div className="block md:hidden divide-y divide-slate-100 dark:divide-slate-800/40">
+                  {calcHistory.map((item) => {
+                    const isEditing = editingCalcId === item.id;
+                    
+                    // 계산값 계산
+                    const vol = ((item.highPrice - item.lowPrice) / item.lowPrice) * 100;
+                    const stopP = item.basePrice * (1 - item.recStop / 100);
+                    const targetP = item.basePrice * (1 + item.recTarget / 100);
+                    
+                    let periodStr = '1개월 (20일)';
+                    if (item.period === 'week') periodStr = '1주일 (5일)';
+                    if (item.period === 'quarter') periodStr = '3개월 (60일)';
+
+                    if (isEditing) {
                       return (
-                        <tr key={item.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-900/20 transition-colors">
-                          <td className="py-4 px-4 font-bold text-slate-750 dark:text-slate-200">{item.ticker}</td>
-                          <td className="py-4 px-4 text-slate-400 font-semibold">{periodStr}</td>
-                          <td className="py-4 px-4 font-mono font-bold text-slate-700 dark:text-slate-300">{item.basePrice.toLocaleString()}</td>
-                          <td className="py-4 px-4 font-mono font-medium text-slate-500 dark:text-slate-400">
-                            {item.highPrice.toLocaleString()} / {item.lowPrice.toLocaleString()}
-                          </td>
-                          <td className="py-4 px-4 font-mono font-bold text-indigo-550 dark:text-indigo-400">{vol.toFixed(1)}%</td>
-                          <td className="py-4 px-4 font-bold text-slate-650 dark:text-slate-300">{item.riskReward.toFixed(1)}배</td>
-                          <td className="py-4 px-4">
-                            <span className="text-rose-500 font-bold">-{item.recStop}%</span>
-                            <span className="text-slate-400 mx-1">/</span>
-                            <span className="text-indigo-400 font-bold">+{item.recTarget}%</span>
-                          </td>
-                          <td className="py-4 px-4">
-                            <div className="font-mono text-rose-500 font-bold">{Math.round(stopP).toLocaleString()}</div>
-                            <div className="font-mono text-indigo-400 text-[10px] font-bold">{Math.round(targetP).toLocaleString()}</div>
-                          </td>
-                          <td className="py-4 px-4 text-right">
-                            <div className="flex justify-end gap-2">
-                              <button
-                                onClick={() => handleStartEditCalcHistory(item)}
-                                className="text-slate-400 hover:text-indigo-500 dark:hover:text-indigo-400 p-1 transition-colors cursor-pointer"
-                                title="수정"
-                              >
-                                <Edit2 className="w-4 h-4" />
-                              </button>
-                              <button
-                                onClick={() => handleDeleteCalcHistory(item.id)}
-                                className="text-slate-400 hover:text-rose-500 dark:hover:text-rose-450 p-1 transition-colors cursor-pointer"
-                                title="삭제"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
+                        <div key={item.id} className="p-4 space-y-3 bg-indigo-500/5 dark:bg-indigo-500/10 rounded-2xl animate-in fade-in duration-200">
+                          <div className="grid grid-cols-2 gap-3 text-xs">
+                            <div>
+                              <label className="block text-[10px] text-slate-400 font-bold mb-1">종목 티커</label>
+                              <input
+                                type="text"
+                                value={editCalcTicker}
+                                onChange={(e) => setEditCalcTicker(e.target.value.toUpperCase())}
+                                className="w-full bg-white dark:bg-slate-900 border border-slate-250 dark:border-slate-850 rounded-xl px-3 py-1.5 font-bold text-slate-800 dark:text-slate-100 focus:outline-none focus:border-indigo-500"
+                              />
                             </div>
-                          </td>
-                        </tr>
+                            <div>
+                              <label className="block text-[10px] text-slate-400 font-bold mb-1">분석 기간</label>
+                              <select
+                                value={editCalcPeriod}
+                                onChange={(e) => setEditCalcPeriod(e.target.value as any)}
+                                className="w-full bg-white dark:bg-slate-900 border border-slate-250 dark:border-slate-850 rounded-xl px-3 py-1.5 font-semibold text-slate-800 dark:text-slate-100 focus:outline-none focus:border-indigo-500"
+                              >
+                                <option value="week">1주일 (5일)</option>
+                                <option value="month">1개월 (20일)</option>
+                                <option value="quarter">3개월 (60일)</option>
+                              </select>
+                            </div>
+                            <div>
+                              <label className="block text-[10px] text-slate-400 font-bold mb-1">기준 진입가</label>
+                              <input
+                                type="number"
+                                value={editCalcBasePrice}
+                                onChange={(e) => setEditCalcBasePrice(e.target.value)}
+                                className="w-full bg-white dark:bg-slate-900 border border-slate-250 dark:border-slate-850 rounded-xl px-3 py-1.5 font-semibold text-right text-slate-800 dark:text-slate-100 focus:outline-none focus:border-indigo-500"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-[10px] text-slate-400 font-bold mb-1">목표 손익비</label>
+                              <select
+                                value={editCalcRiskReward}
+                                onChange={(e) => setEditCalcRiskReward(parseFloat(e.target.value))}
+                                className="w-full bg-white dark:bg-slate-900 border border-slate-250 dark:border-slate-850 rounded-xl px-3 py-1.5 font-semibold text-slate-800 dark:text-slate-100 focus:outline-none focus:border-indigo-500"
+                              >
+                                <option value={1.5}>1.5배</option>
+                                <option value={2.0}>2.0배</option>
+                                <option value={2.5}>2.5배</option>
+                              </select>
+                            </div>
+                            <div>
+                              <label className="block text-[10px] text-slate-400 font-bold mb-1">기간 내 최고가</label>
+                              <input
+                                type="number"
+                                value={editCalcHighPrice}
+                                onChange={(e) => setEditCalcHighPrice(e.target.value)}
+                                className="w-full bg-white dark:bg-slate-900 border border-slate-250 dark:border-slate-850 rounded-xl px-3 py-1.5 font-semibold text-right text-slate-800 dark:text-slate-100 focus:outline-none focus:border-indigo-500"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-[10px] text-slate-400 font-bold mb-1">기간 내 최저가</label>
+                              <input
+                                type="number"
+                                value={editCalcLowPrice}
+                                onChange={(e) => setEditCalcLowPrice(e.target.value)}
+                                className="w-full bg-white dark:bg-slate-900 border border-slate-250 dark:border-slate-850 rounded-xl px-3 py-1.5 font-semibold text-right text-slate-800 dark:text-slate-100 focus:outline-none focus:border-indigo-500"
+                              />
+                            </div>
+                          </div>
+                          
+                          <div className="flex gap-2 justify-end pt-2">
+                            <button
+                              onClick={() => handleSaveEditCalcHistory(item.id)}
+                              className="bg-indigo-500 hover:bg-indigo-650 text-white px-4 py-2 rounded-xl font-bold transition-all flex items-center gap-1.5 shadow-sm text-xs cursor-pointer"
+                            >
+                              <Check className="w-4 h-4" />
+                              <span>수정 저장</span>
+                            </button>
+                            <button
+                              onClick={() => setEditingCalcId(null)}
+                              className="bg-slate-200 dark:bg-slate-800 text-slate-650 dark:text-slate-350 px-4 py-2 rounded-xl font-bold hover:bg-slate-300 dark:hover:bg-slate-700 transition-all flex items-center gap-1.5 text-xs cursor-pointer"
+                            >
+                              <X className="w-4 h-4" />
+                              <span>취소</span>
+                            </button>
+                          </div>
+                        </div>
                       );
-                    })}
-                  </tbody>
-                </table>
-              </div>
+                    }
+
+                    return (
+                      <div key={item.id} className="p-4 space-y-3 hover:bg-slate-100/30 dark:hover:bg-slate-900/10 transition-colors">
+                        {/* Header: Ticker, Period */}
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-extrabold text-slate-900 dark:text-slate-100">{item.ticker}</span>
+                          <span className="text-[10px] bg-slate-200/50 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400 px-2 py-0.5 rounded-lg font-bold">
+                            {periodStr}
+                          </span>
+                        </div>
+
+                        {/* Details grid */}
+                        <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-[11px] text-slate-500 font-semibold border-b border-slate-200/30 dark:border-slate-800/20 pb-2">
+                          <div className="flex justify-between">
+                            <span>기준 진입가:</span>
+                            <span className="font-mono font-bold text-slate-750 dark:text-slate-300">{item.basePrice.toLocaleString()}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>변동폭 (손익비):</span>
+                            <span className="font-mono font-bold text-indigo-500 dark:text-indigo-400">{vol.toFixed(1)}% ({item.riskReward.toFixed(1)}배)</span>
+                          </div>
+                          <div className="flex justify-between col-span-2">
+                            <span>최고가 / 최저가:</span>
+                            <span className="font-mono font-medium text-slate-600 dark:text-slate-400">{item.highPrice.toLocaleString()} / {item.lowPrice.toLocaleString()}</span>
+                          </div>
+                        </div>
+
+                        {/* Volatility Output Stop/Target Details */}
+                        <div className="flex items-center justify-between pt-1">
+                          <div className="space-y-1">
+                            <div className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">추천 익절/손절가 및 트리거</div>
+                            <div className="flex items-center gap-3">
+                              <div>
+                                <span className="text-rose-500 font-bold">-{item.recStop}%</span>
+                                <span className="font-mono font-extrabold text-rose-500 ml-1 text-xs">{Math.round(stopP).toLocaleString()}</span>
+                              </div>
+                              <span className="text-slate-300 dark:text-slate-800">|</span>
+                              <div>
+                                <span className="text-indigo-405 font-bold">+{item.recTarget}%</span>
+                                <span className="font-mono font-extrabold text-indigo-405 ml-1 text-xs">{Math.round(targetP).toLocaleString()}</span>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          {/* Action buttons */}
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              onClick={() => handleStartEditCalcHistory(item)}
+                              className="p-2 text-slate-400 hover:text-indigo-500 dark:hover:text-indigo-400 transition-colors cursor-pointer rounded-lg bg-slate-100/50 dark:bg-slate-900/60"
+                              title="수정"
+                            >
+                              <Edit2 className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteCalcHistory(item.id)}
+                              className="p-2 text-slate-400 hover:text-rose-500 dark:hover:text-rose-450 transition-colors cursor-pointer rounded-lg bg-slate-100/50 dark:bg-slate-900/60"
+                              title="삭제"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
             ) : (
               <div className="py-8 text-center text-slate-400/80 text-xs">
                 최근 계산 히스토리가 비어 있습니다. 위 계산기에서 종목명을 기입하고 결과를 저장해 보세요!
