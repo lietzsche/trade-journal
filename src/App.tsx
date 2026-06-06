@@ -1114,6 +1114,51 @@ export default function App() {
       .catch((err) => alert('복사에 실패했습니다: ' + err));
   };
 
+  const copyAIPrompt = () => {
+    if (portfolio.length === 0) {
+      alert('분석할 보유 자산이 없습니다.');
+      return;
+    }
+
+    let holdingsText = '';
+    portfolio.forEach((item, index) => {
+      const formattedBuyPrice = formatCurrency(item.buyPrice, item.currency);
+      const formattedCurrentPrice = formatCurrency(item.currentPrice, item.currency);
+      const formattedStopLoss = formatCurrency(item.stopLoss, item.currency);
+      const formattedNextTarget = formatCurrency(item.nextTarget, item.currency);
+      const pnlSign = item.unrealizedPnL >= 0 ? '+' : '';
+      const formattedPnL = `${pnlSign}${formatCurrency(item.unrealizedPnL, item.currency)} (${pnlSign}${item.pnlPercent.toFixed(2)}%)`;
+
+      holdingsText += `${index + 1}. ${item.ticker}
+   - 보유 수량: ${item.quantity.toLocaleString()}개
+   - 매입 평단가: ${formattedBuyPrice}
+   - 현재가: ${formattedCurrentPrice}
+   - 평가 손익: ${formattedPnL}
+   - 트레일링 스톱 레벨: Lv.${item.level} (전략 설정: 목표 +${item.trailingTargetPercent}% / 스톱 -${item.trailingStopPercent}%)
+   - 현재 스톱가: ${formattedStopLoss}${item.currentPrice <= item.stopLoss ? ' (★스톱 기준 이탈!)' : ''}
+   - 차기 목표가: ${formattedNextTarget}\n\n`;
+    });
+
+    const promptText = `안녕하세요. 아래의 주식 포트폴리오 정보를 바탕으로 시장 상황과 연계해 종합적인 현재 상태 및 향후 대응 전망 분석을 요청합니다.
+
+[나의 트레일링 스톱(Trailing Stop) 전략 기준]
+- 각 종목마다 개별 목표 비율(T%) 상승 시 트레일링 스톱 레벨(Lv)이 1씩 상승합니다.
+- 레벨(Lv) 0 이하일 때의 스톱라인(Stop Loss)은 매입 평단가 대비 -S%입니다.
+- 레벨(Lv) 1 이상일 때의 스톱라인은 평단가 * (1 + (Lv - 1) * T / 100)로 상승 조정되며, 현재가 위치에 따라 실시간으로 손실을 방지하고 이미 얻은 수익을 실현(Lock-in)하는 구조입니다.
+
+[현재 보유 자산 트레일링 스톱 상태]
+${holdingsText.trim()}
+
+[AI 요청 사항]
+1. 위 종목들의 현재가 대비 스톱가(Stop Loss) 및 차기 목표가(Target) 도달 여부 및 마진 현황을 바탕으로 각 종목의 단기/중기 리스크 상태를 진단해 줘. 특히 스톱라인을 이탈했거나 아슬아슬하게 걸쳐있는 종목이 있다면 최우선 대응법을 제시해 줘.
+2. 거시 경제 상황이나 최근 업종/테마 흐름을 고려할 때, 각 종목들의 향후 추세와 주가 전망은 어떨 것으로 예상하는지 의견을 알려줘.
+3. 이 트레일링 스톱 전략을 고도화하기 위해 변동성을 고려하여 현재의 목표 비율(T%)과 스톱 비율(S%) 설정값들을 조정할 필요가 있는지 조언해 주고, 종합적인 포트폴리오 관리 차원의 대응 시나리오를 구체적으로 작성해 줘.`;
+
+    navigator.clipboard.writeText(promptText.trim())
+      .then(() => alert('AI 분석용 프롬프트가 클립보드에 복사되었습니다. ChatGPT나 Claude 등 AI에게 붙여넣어 분석을 시작하세요!'))
+      .catch((err) => alert('복사에 실패했습니다: ' + err));
+  };
+
   // Auth Action Handlers
   const handleAuthSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -2220,14 +2265,24 @@ export default function App() {
                 </div>
                 <div className="flex items-center gap-2">
                   {portfolio.length > 0 && (
-                    <button
-                      onClick={copyAllPortfolioStrategies}
-                      className="text-xs font-extrabold bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 px-3 py-1.5 rounded-lg border border-indigo-500/20 hover:bg-indigo-500/20 transition-all flex items-center gap-1.5 cursor-pointer shadow-sm"
-                      title="모든 보유 자산의 트레일링 스톱 현황 복사"
-                    >
-                      <Copy className="w-3.5 h-3.5" />
-                      <span>전체 복사</span>
-                    </button>
+                    <>
+                      <button
+                        onClick={copyAllPortfolioStrategies}
+                        className="text-xs font-extrabold bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 px-3 py-1.5 rounded-lg border border-indigo-500/20 hover:bg-indigo-500/20 transition-all flex items-center gap-1.5 cursor-pointer shadow-sm"
+                        title="모든 보유 자산의 트레일링 스톱 현황 복사"
+                      >
+                        <Copy className="w-3.5 h-3.5" />
+                        <span>전체 복사</span>
+                      </button>
+                      <button
+                        onClick={copyAIPrompt}
+                        className="text-xs font-extrabold bg-amber-500/10 text-amber-600 dark:text-amber-400 px-3 py-1.5 rounded-lg border border-amber-500/20 hover:bg-amber-500/20 transition-all flex items-center gap-1.5 cursor-pointer shadow-sm"
+                        title="AI 분석용 프롬프트 복사 (ChatGPT/Claude 전달용)"
+                      >
+                        <Sparkles className="w-3.5 h-3.5" />
+                        <span>AI 분석 프롬프트</span>
+                      </button>
+                    </>
                   )}
                   <div className="text-xs text-slate-500 font-semibold bg-white dark:bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800">
                     총 보유 종목: {portfolio.length}개
