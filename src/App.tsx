@@ -1883,16 +1883,16 @@ ${holdingsText.trim()}
         )}
 
         <div 
-          className={`flex flex-row w-[400%] flex-nowrap ${isSwiping ? '' : 'transition-transform duration-300 ease-out'}`}
           style={{
-            transform: `translateX(calc(-${currentIndex * 25}% + ${touchOffsetX}px))`
+            ['--tab-tx' as any]: `calc(-${currentIndex * 25}% + ${touchOffsetX}px)`
           }}
+          className={`flex flex-row w-[400%] flex-nowrap [transform:translateX(var(--tab-tx))] md:[transform:none] md:w-full md:flex-col ${isSwiping ? '' : 'transition-transform duration-300 ease-out'}`}
         >
 
           {/* ---------------------------------------------------- */}
           {/* Tab 1: DASHBOARD */}
           {/* ---------------------------------------------------- */}
-          <div className="w-1/4 flex-shrink-0 px-1 md:px-0">
+          <div className={`w-1/4 flex-shrink-0 px-1 md:px-0 ${currentIndex === 0 ? 'md:block md:w-full' : 'md:hidden'}`}>
             <div className="space-y-6">
             
             {/* Risk Warnings alerts panel */}
@@ -2216,7 +2216,7 @@ ${holdingsText.trim()}
           {/* ---------------------------------------------------- */}
           {/* Tab 2: PORTFOLIO & TRAILING STOP */}
           {/* ---------------------------------------------------- */}
-          <div className="w-1/4 flex-shrink-0 px-1 md:px-0">
+          <div className={`w-1/4 flex-shrink-0 px-1 md:px-0 ${currentIndex === 1 ? 'md:block md:w-full' : 'md:hidden'}`}>
             <div className="space-y-6">
 
             {/* Strategy guide banner (Collapsible, collapsed by default) */}
@@ -2852,7 +2852,7 @@ ${holdingsText.trim()}
           {/* ---------------------------------------------------- */}
           {/* Tab 3: TRADE LOGS (Transactions) */}
           {/* ---------------------------------------------------- */}
-          <div className="w-1/4 flex-shrink-0 px-1 md:px-0">
+          <div className={`w-1/4 flex-shrink-0 px-1 md:px-0 ${currentIndex === 2 ? 'md:block md:w-full' : 'md:hidden'}`}>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
             
             {/* Left Col: Add Transaction Form (Collapsible, collapsed by default) */}
@@ -3305,7 +3305,7 @@ ${holdingsText.trim()}
           {/* ---------------------------------------------------- */}
           {/* Tab 4: CALCULATOR */}
           {/* ---------------------------------------------------- */}
-          <div className="w-1/4 flex-shrink-0 px-1 md:px-0">
+          <div className={`w-1/4 flex-shrink-0 px-1 md:px-0 ${currentIndex === 3 ? 'md:block md:w-full' : 'md:hidden'}`}>
             <div className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
               
