@@ -1046,14 +1046,16 @@ export default function App() {
 
   const copyStrategyGuide = () => {
     const text = `[트레일링 스톱(Trailing Stop) 전략 및 공식]
+※ 각 종목별 전략 설정값(목표 비율 T%, 스톱 비율 S%)에 따라 동적으로 적용됩니다.
+
 1. 평가 손익률 (P&L%): ((현재가 - 평단가) / 평단가) * 100
-2. 익스톱 레벨 (Level): 10% 상승마다 레벨 1씩 증가 (Lv = Math.floor(손익률 / 10))
+2. 익스톱 레벨 (Level): T% 상승마다 레벨 1씩 증가 (Lv = Math.floor(평가 손익률 / T))
 3. 익절/손절가 (Stop Loss):
-   - Lv ≤ 0 : 평단가 대비 -5%
-   - Lv ≥ 1 : 평단가 * (1 + (Lv - 1) * 0.1)
+   - Lv ≤ 0 : 평단가 대비 -S% (평단가 * (1 - S / 100))
+   - Lv ≥ 1 : 평단가 * (1 + (Lv - 1) * T / 100) (이전 레벨의 목표가)
 4. 차기 목표가 (Target):
    - Lv < 0 : 평단가(본전)
-   - Lv ≥ 0 : 평단가 * (1 + (Lv + 1) * 0.1)`;
+   - Lv ≥ 0 : 평단가 * (1 + (Lv + 1) * T / 100) (다음 레벨의 목표가)`;
     
     navigator.clipboard.writeText(text)
       .then(() => alert('트레일링 스톱 전략 공식이 클립보드에 복사되었습니다.'))
@@ -1079,6 +1081,36 @@ export default function App() {
 
     navigator.clipboard.writeText(text)
       .then(() => alert(`${item.ticker} 종목의 트레일링 스톱 전략 매개변수가 클립보드에 복사되었습니다.`))
+      .catch((err) => alert('복사에 실패했습니다: ' + err));
+  };
+
+  const copyAllPortfolioStrategies = () => {
+    if (portfolio.length === 0) {
+      alert('복사할 보유 자산이 없습니다.');
+      return;
+    }
+
+    let text = `[FINFOLIO 보유 자산 트레일링 스톱 현황 리포트 - ${new Date().toLocaleDateString()}]\n\n`;
+
+    portfolio.forEach((item, index) => {
+      const formattedBuyPrice = formatCurrency(item.buyPrice, item.currency);
+      const formattedCurrentPrice = formatCurrency(item.currentPrice, item.currency);
+      const formattedStopLoss = formatCurrency(item.stopLoss, item.currency);
+      const formattedNextTarget = formatCurrency(item.nextTarget, item.currency);
+      const pnlSign = item.unrealizedPnL >= 0 ? '+' : '';
+      const formattedPnL = `${pnlSign}${formatCurrency(item.unrealizedPnL, item.currency)} (${pnlSign}${item.pnlPercent.toFixed(2)}%)`;
+
+      text += `${index + 1}. ${item.ticker}
+  • 매입평단가: ${formattedBuyPrice}
+  • 현재가: ${formattedCurrentPrice}
+  • 평가손익: ${formattedPnL}
+  • 현재 레벨: Lv.${item.level} (전략 설정: 목표 +${item.trailingTargetPercent}% / 스톱 -${item.trailingStopPercent}%)
+  • 익절/손절가(Stop Loss): ${formattedStopLoss}${item.currentPrice <= item.stopLoss ? ' (스톱 도달!)' : ''}
+  • 차기 목표가(Target): ${formattedNextTarget}\n\n`;
+    });
+
+    navigator.clipboard.writeText(text.trim())
+      .then(() => alert('모든 보유 자산의 트레일링 스톱 현황이 클립보드에 복사되었습니다.'))
       .catch((err) => alert('복사에 실패했습니다: ' + err));
   };
 
@@ -2152,25 +2184,25 @@ export default function App() {
                     </div>
                     <div className="p-4 bg-white/50 dark:bg-slate-900/40 rounded-xl border border-slate-200 dark:border-slate-800/60">
                       <span className="font-extrabold text-slate-700 dark:text-slate-200">2. 익스톱 레벨 (Level)</span>
-                      <div className="font-mono text-slate-400 mt-1">10% 상승마다 레벨 1씩 증가 (Lv = Math.floor(손익률/10))</div>
+                      <div className="font-mono text-slate-400 mt-1">T% 상승마다 레벨 1씩 증가 (Lv = Math.floor(손익률 / T))</div>
                     </div>
                     <div className="p-4 bg-white/50 dark:bg-slate-900/40 rounded-xl border border-slate-200 dark:border-slate-800/60">
                       <span className="font-extrabold text-slate-700 dark:text-slate-200">3. 익절/손절가 (Stop Loss)</span>
                       <div className="font-mono text-slate-400 mt-1 leading-relaxed">
-                        Lv ≤ 0 : 평단가 대비 -5%<br />
-                        Lv ≥ 1 : 평단가 * (1 + (Lv - 1) * 0.1)
+                        Lv ≤ 0 : 평단가 대비 -S%<br />
+                        Lv ≥ 1 : 평단가 * (1 + (Lv - 1) * T / 100)
                       </div>
                     </div>
                     <div className="p-4 bg-white/50 dark:bg-slate-900/40 rounded-xl border border-slate-200 dark:border-slate-800/60">
                       <span className="font-extrabold text-slate-700 dark:text-slate-200">4. 차기 목표가 (Target)</span>
                       <div className="font-mono text-slate-400 mt-1 leading-relaxed">
                         Lv &lt; 0 : 평단가(본전)<br />
-                        Lv ≥ 0 : 평단가 * (1 + (Lv + 1) * 0.1)
+                        Lv ≥ 0 : 평단가 * (1 + (Lv + 1) * T / 100)
                       </div>
                     </div>
                   </div>
                   <p className="text-[10px] text-slate-400/80 mt-3 italic leading-normal">
-                    * 위 공식 가이드는 기본 설정값(목표 +10% / 스톱 -5%) 기준의 예시이며, 실제 트레일링 스톱 익손절선은 보유 자산 목록에서 각 종목의 우측 '전략 설정' 열에 지정하신 개별 비율에 따라 동적으로 자동 적용됩니다.
+                    * T(목표/트리거 비율)와 S(스톱/손실 비율)는 사용자가 변동성 전략 계산기에서 도출한 설정값을 각 종목의 '전략 설정' 열에 직접 입력하여 개인화된 트레일링 스톱 전략으로 작동합니다.
                   </p>
                 </div>
               )}
@@ -2186,8 +2218,20 @@ export default function App() {
                   </h2>
                   <p className="text-xs text-slate-400 mt-1">현재 주가를 수정하면 손절선과 차기 목표가가 자동 계산됩니다.</p>
                 </div>
-                <div className="text-xs text-slate-500 font-semibold bg-white dark:bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800">
-                  총 보유 종목: {portfolio.length}개
+                <div className="flex items-center gap-2">
+                  {portfolio.length > 0 && (
+                    <button
+                      onClick={copyAllPortfolioStrategies}
+                      className="text-xs font-extrabold bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 px-3 py-1.5 rounded-lg border border-indigo-500/20 hover:bg-indigo-500/20 transition-all flex items-center gap-1.5 cursor-pointer shadow-sm"
+                      title="모든 보유 자산의 트레일링 스톱 현황 복사"
+                    >
+                      <Copy className="w-3.5 h-3.5" />
+                      <span>전체 복사</span>
+                    </button>
+                  )}
+                  <div className="text-xs text-slate-500 font-semibold bg-white dark:bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800">
+                    총 보유 종목: {portfolio.length}개
+                  </div>
                 </div>
               </div>
 
