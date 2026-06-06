@@ -2248,9 +2248,7 @@ export default function App() {
                       <th className="py-4 px-6 text-right">평가 손익 (%)</th>
                       <th className="py-4 px-6 text-center">도달 레벨</th>
                       <th className="py-4 px-6 text-center">전략 (트리거/스톱)</th>
-                      <th className="py-4 px-6 text-right text-rose-500">익절/손절가</th>
-                      <th className="py-4 px-6 text-right text-indigo-500">차기 목표가</th>
-                      <th className="py-4 px-6 text-center">현재 위치 게이지</th>
+                      <th className="py-4 px-6 text-center">현재 위치 (스톱 ~ 목표)</th>
                       <th className="py-4 px-6">메모</th>
                     </tr>
                   </thead>
@@ -2404,23 +2402,8 @@ export default function App() {
                             )}
                           </td>
 
-                          {/* Stop Loss (If dynamic status warning is below target) */}
-                          <td className="py-4 px-6 text-right font-bold font-mono">
-                            <span className={item.currentPrice <= item.stopLoss ? 'text-rose-500 animate-pulse' : 'text-rose-500 dark:text-rose-400'}>
-                              {formatCurrency(item.stopLoss, item.currency)}
-                            </span>
-                            {item.currentPrice <= item.stopLoss && (
-                              <span className="block text-[9px] text-rose-500 font-extrabold uppercase mt-0.5">이탈 (STOP TRIGGERED)</span>
-                            )}
-                          </td>
-
-                          {/* Next Target */}
-                          <td className="py-4 px-6 text-right font-bold font-mono text-indigo-600 dark:text-indigo-400">
-                            {formatCurrency(item.nextTarget, item.currency)}
-                          </td>
-
-                          {/* 현재 위치 게이지 */}
-                          <td className="py-4 px-6">
+                          {/* 현재 위치 게이지 (스톱 ~ 목표) */}
+                          <td className="py-4 px-6 text-center">
                             {(() => {
                               const stopVal = item.stopLoss;
                               const targetVal = item.nextTarget;
@@ -2433,24 +2416,33 @@ export default function App() {
                               }
 
                               return (
-                                <div className="flex flex-col gap-1 w-full min-w-[150px] max-w-[200px] text-[10px] mx-auto">
-                                  <div className="relative w-full bg-slate-200 dark:bg-slate-800/80 h-3 rounded-full border border-slate-350/20 dark:border-slate-700/20 overflow-hidden flex items-center p-0.5">
+                                <div className="flex flex-col gap-1.5 w-full min-w-[170px] max-w-[220px] mx-auto text-[10px]">
+                                  <div className="relative w-full bg-slate-200 dark:bg-slate-800/80 h-2.5 rounded-full overflow-hidden flex items-center p-0">
                                     <div 
                                       className={`h-full rounded-full transition-all duration-300 ${
                                         currentVal <= stopVal 
                                           ? 'bg-rose-500' 
                                           : currentVal >= targetVal 
                                           ? 'bg-indigo-500' 
-                                          : 'bg-gradient-to-r from-rose-500 via-amber-450 to-indigo-500 dark:from-rose-500/85 dark:via-amber-500/85 dark:to-indigo-500/85'
+                                          : 'bg-gradient-to-r from-rose-500 via-amber-500 to-indigo-500 dark:from-rose-500/80 dark:via-amber-500/80 dark:to-indigo-500/80'
                                       }`}
                                       style={{ width: `${positionPercent}%` }}
                                     />
                                   </div>
-                                  <div className="flex justify-between items-center text-[9px] font-bold mt-0.5 px-0.5 whitespace-nowrap">
-                                    <span className="text-rose-500">스톱 {formatCurrency(stopVal, item.currency)}</span>
-                                    <span className="text-slate-500 dark:text-slate-400 font-mono">{positionPercent.toFixed(0)}%</span>
-                                    <span className="text-indigo-500 dark:text-indigo-400">목표 {formatCurrency(targetVal, item.currency)}</span>
+                                  <div className="flex justify-between items-center text-[9px] font-bold mt-1 px-0.5 whitespace-nowrap">
+                                    <span className={currentVal <= stopVal ? "text-rose-600 dark:text-rose-500 animate-pulse font-extrabold" : "text-rose-500"}>
+                                      Stop {formatCurrency(stopVal, item.currency)}
+                                    </span>
+                                    <span className="text-slate-500 dark:text-slate-400 font-mono text-[9px]">{positionPercent.toFixed(0)}%</span>
+                                    <span className="text-indigo-600 dark:text-indigo-400 font-extrabold">
+                                      Goal {formatCurrency(targetVal, item.currency)}
+                                    </span>
                                   </div>
+                                  {currentVal <= stopVal && (
+                                    <span className="block text-[8px] text-rose-500 font-black uppercase text-center mt-0.5 tracking-tighter">
+                                      이탈 (STOP TRIGGERED)
+                                    </span>
+                                  )}
                                 </div>
                               );
                             })()}
@@ -2463,7 +2455,7 @@ export default function App() {
                       ))
                     ) : (
                       <tr>
-                        <td colSpan={12} className="py-12 px-6 text-center text-slate-400">
+                        <td colSpan={10} className="py-12 px-6 text-center text-slate-400">
                           보유하고 있는 주식 자산이 없습니다. [매매 거래 일지] 탭에서 매수(BUY) 기록을 등록해 주세요.
                         </td>
                       </tr>
