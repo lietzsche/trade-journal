@@ -1,0 +1,1 @@
+ALTER TABLE `portfolio` ADD `level` integer DEFAULT 0 NOT NULL;

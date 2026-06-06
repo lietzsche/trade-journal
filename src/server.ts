@@ -103,6 +103,7 @@ async function recalculatePortfolio(db: any, userId: number, ticker: string) {
           buyPrice,
           quantity,
           currency,
+          level: 0, // Reset trailing stop level to 0 on new transactions (average price changes)
           updatedAt: new Date().toISOString(),
         })
         .where(eq(schema.portfolio.id, existing.id));
@@ -297,16 +298,15 @@ authApp.get('/portfolio', async (c) => {
       // 1. P&L %
       const pnlPercent = ((currentPrice - buyPrice) / buyPrice) * 100;
 
-      // 2. Trailing Stop Level (Lv = Math.floor(pnlPercent / targetPercent))
-      const level = Math.floor(pnlPercent / targetPercent);
-      const displayLevel = Math.max(0, level);
+      // 2. Trailing Stop Level (Persisted in DB)
+      const displayLevel = Math.max(0, item.level ?? 0);
 
       // 3. Stop Loss line (trails stopPercent% below the newly achieved targetPercent%-profit milestone)
       const stopLoss = buyPrice * (1 + displayLevel * targetFactor) * stopFactor;
 
       // 4. Next Target Price
       let nextTarget = 0;
-      if (pnlPercent < 0) {
+      if (pnlPercent < 0 && displayLevel === 0) {
         nextTarget = buyPrice; // Goal is break-even
       } else {
         nextTarget = buyPrice * (1 + (displayLevel + 1) * targetFactor);
@@ -317,7 +317,7 @@ authApp.get('/portfolio', async (c) => {
       return {
         ...item,
         pnlPercent,
-        level: Math.max(0, level), // Level shouldn't be negative in display
+        level: displayLevel,
         stopLoss,
         nextTarget,
         unrealizedPnL,
@@ -353,17 +353,65 @@ authApp.post('/portfolio/:id/price', async (c) => {
       return c.json({ error: '수정하려는 자산을 찾을 수 없거나 권한이 없습니다.' }, 404);
     }
 
+    const buyPrice = existing.buyPrice;
+    const targetPercent = existing.trailingTargetPercent ?? 10;
+    const pnlPercent = ((Number(currentPrice) - buyPrice) / buyPrice) * 100;
+    const calcLevel = Math.max(0, Math.floor(pnlPercent / targetPercent));
+
+    const updateSet: any = {
+      currentPrice: Number(currentPrice),
+      updatedAt: new Date().toISOString(),
+    };
+
+    // Auto-escalate level only if the newly calculated level is higher than the current persisted level
+    if (calcLevel > (existing.level ?? 0)) {
+      updateSet.level = calcLevel;
+    }
+
     await db
       .update(schema.portfolio)
-      .set({
-        currentPrice: Number(currentPrice),
-        updatedAt: new Date().toISOString(),
-      })
+      .set(updateSet)
       .where(eq(schema.portfolio.id, id));
 
     return c.json({ success: true, message: '현재가가 수정되었습니다.' });
   } catch (err: any) {
     return c.json({ error: '현재가 수정 중 오류가 발생했습니다: ' + err.message }, 500);
+  }
+});
+
+// B-1.5. Update Trailing Stop Level Manually
+authApp.post('/portfolio/:id/level', async (c) => {
+  const db = drizzle(c.env.DB, { schema });
+  const userId = c.get('userId');
+  const id = parseInt(c.req.param('id'));
+  const { level } = await c.req.json();
+
+  if (level === undefined || isNaN(Number(level)) || Number(level) < 0) {
+    return c.json({ error: '올바른 레벨 값을 입력해 주세요.' }, 400);
+  }
+
+  try {
+    // Verify ownership
+    const [existing] = await db
+      .select()
+      .from(schema.portfolio)
+      .where(and(eq(schema.portfolio.id, id), eq(schema.portfolio.userId, userId)));
+
+    if (!existing) {
+      return c.json({ error: '수정하려는 자산을 찾을 수 없거나 권한이 없습니다.' }, 404);
+    }
+
+    await db
+      .update(schema.portfolio)
+      .set({
+        level: Math.max(0, parseInt(level)),
+        updatedAt: new Date().toISOString(),
+      })
+      .where(eq(schema.portfolio.id, id));
+
+    return c.json({ success: true, message: '트레일링 스톱 레벨이 수동 조정되었습니다.' });
+  } catch (err: any) {
+    return c.json({ error: '레벨 수동 조정 중 오류가 발생했습니다: ' + err.message }, 500);
   }
 });
 

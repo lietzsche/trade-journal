@@ -289,6 +289,10 @@ export default function App() {
   const [tempTargetValue, setTempTargetValue] = useState<string>('');
   const [tempStopValue, setTempStopValue] = useState<string>('');
 
+  // Inline edit state for trailing stop level manual override
+  const [editingLevelId, setEditingLevelId] = useState<number | null>(null);
+  const [tempLevelValue, setTempLevelValue] = useState<string>('');
+
   // Volatility Calculator state
   const [calcPeriod, setCalcPeriod] = useState<'week' | 'month' | 'quarter'>('month');
   const [calcBasePrice, setCalcBasePrice] = useState<string>('');
@@ -1354,6 +1358,34 @@ ${holdingsText.trim()}
     setTempPriceValue(item.currentPrice.toString());
   };
 
+  // Manual Trailing Stop Level Update
+  const handleSaveLevel = async (portfolioId: number) => {
+    const numericLevel = parseInt(tempLevelValue);
+    if (isNaN(numericLevel) || numericLevel < 0) {
+      alert('올바른 레벨 값을 입력해주세요.');
+      return;
+    }
+
+    try {
+      setActionLoading(true);
+      await fetchWithAuth(`/api/portfolio/${portfolioId}/level`, {
+        method: 'POST',
+        body: JSON.stringify({ level: numericLevel }),
+      });
+      setEditingLevelId(null);
+      await loadAllData();
+    } catch (err: any) {
+      alert(err.message);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleStartEditingLevel = (item: PortfolioItem) => {
+    setEditingLevelId(item.id);
+    setTempLevelValue(item.level.toString());
+  };
+
   // Manual Trailing Stop Settings Update
   const handleSaveSettings = async (portfolioId: number) => {
     const numericTarget = parseFloat(tempTargetValue);
@@ -2391,13 +2423,52 @@ ${holdingsText.trim()}
 
                           {/* Level pill */}
                           <td className="py-4 px-6 text-center">
-                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                              item.level > 0
-                                ? 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20'
-                               : 'bg-slate-200/60 dark:bg-slate-800 text-slate-500 dark:text-slate-400'
-                            }`}>
-                              Lv.{item.level}
-                            </span>
+                            {editingLevelId === item.id ? (
+                              <div className="flex items-center justify-center gap-1">
+                                <input
+                                  type="number"
+                                  value={tempLevelValue}
+                                  onChange={(e) => setTempLevelValue(e.target.value)}
+                                  className="w-12 bg-white dark:bg-slate-900 border border-indigo-500 rounded px-1.5 py-0.5 text-center text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 font-bold font-mono"
+                                  autoFocus
+                                  min="0"
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') handleSaveLevel(item.id);
+                                    if (e.key === 'Escape') setEditingLevelId(null);
+                                  }}
+                                />
+                                <button
+                                  onClick={() => handleSaveLevel(item.id)}
+                                  disabled={actionLoading}
+                                  className="bg-indigo-600 hover:bg-indigo-700 text-white px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer"
+                                >
+                                  저장
+                                </button>
+                                <button
+                                  onClick={() => setEditingLevelId(null)}
+                                  className="bg-slate-200 dark:bg-slate-800 text-slate-500 dark:text-slate-300 px-1.5 py-0.5 rounded text-[10px] cursor-pointer"
+                                >
+                                  취소
+                                </button>
+                              </div>
+                            ) : (
+                              <div className="flex items-center justify-center gap-1 group">
+                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                                  item.level > 0
+                                    ? 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20'
+                                    : 'bg-slate-200/60 dark:bg-slate-800 text-slate-500 dark:text-slate-400'
+                                }`}>
+                                  Lv.{item.level}
+                                </span>
+                                <button
+                                  onClick={() => handleStartEditingLevel(item)}
+                                  className="text-slate-400 hover:text-indigo-500 p-1 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                                  title="레벨 수동 조정"
+                                >
+                                  <Edit3 className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            )}
                           </td>
 
                           {/* Trailing Stop custom settings cell */}
@@ -2709,6 +2780,47 @@ ${holdingsText.trim()}
                                   onClick={() => handleStartEditingSettings(item)}
                                   className="text-slate-500 hover:text-indigo-500 p-0.5 cursor-pointer"
                                   title="전략 수정"
+                                >
+                                  <Edit3 className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Interactive Trailing Stop Level editor */}
+                          <div>
+                            {editingLevelId === item.id ? (
+                              <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 py-1 px-2 rounded-xl">
+                                <input
+                                  type="number"
+                                  value={tempLevelValue}
+                                  onChange={(e) => setTempLevelValue(e.target.value)}
+                                  className="w-12 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md py-0.5 text-center text-[10px] focus:outline-none font-bold"
+                                  placeholder="레벨"
+                                  autoFocus
+                                  min="0"
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') handleSaveLevel(item.id);
+                                    if (e.key === 'Escape') setEditingLevelId(null);
+                                  }}
+                                />
+                                <button
+                                  onClick={() => handleSaveLevel(item.id)}
+                                  className="bg-indigo-600 hover:bg-indigo-700 text-white px-2 py-0.5 rounded-md text-[9px] font-bold cursor-pointer ml-1"
+                                >
+                                  저장
+                                </button>
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 py-1.5 px-3 rounded-xl hover:border-indigo-500 transition-colors">
+                                <div className="text-right">
+                                  <div className="text-[9px] text-slate-500 font-bold">도달 레벨</div>
+                                  <span className="text-xs font-bold text-slate-800 dark:text-slate-200">Lv.{item.level}</span>
+                                </div>
+                                <button
+                                  onClick={() => handleStartEditingLevel(item)}
+                                  className="text-slate-500 hover:text-indigo-500 p-0.5 cursor-pointer"
+                                  title="레벨 수동 조정"
                                 >
                                   <Edit3 className="w-3.5 h-3.5" />
                                 </button>
