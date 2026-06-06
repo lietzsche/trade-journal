@@ -51,5 +51,10 @@ export const calculatorHistory = sqliteTable('calculator_history', {
   riskReward: real('risk_reward').notNull(),
   recStop: integer('rec_stop').notNull(),
   recTarget: integer('rec_target').notNull(),
+  currentPrice: real('current_price').default(0).notNull(),
+  ma20: real('ma20').default(0).notNull(),
+  ma60: real('ma60').default(0).notNull(),
+  trendScore: integer('trend_score').default(0).notNull(),
+  regimeSignal: text('regime_signal').default('하락 국면 ⚠️').notNull(),
   createdAt: text('created_at').default(sql`CURRENT_TIMESTAMP`).notNull(),
 });

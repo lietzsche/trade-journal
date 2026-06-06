@@ -838,7 +838,7 @@ authApp.post('/calculator/history', async (c) => {
   const userId = c.get('userId');
   const body = await c.req.json();
 
-  const { ticker, period, basePrice, highPrice, lowPrice, riskReward, recStop, recTarget } = body;
+  const { ticker, period, basePrice, highPrice, lowPrice, riskReward, recStop, recTarget, currentPrice, ma20, ma60 } = body;
 
   if (!ticker || !ticker.trim()) {
     return c.json({ error: '종목 티커를 입력해 주세요.' }, 400);
@@ -855,8 +855,41 @@ authApp.post('/calculator/history', async (c) => {
   if (lowPrice === undefined || isNaN(Number(lowPrice)) || Number(lowPrice) <= 0) {
     return c.json({ error: '올바른 기간 내 최저가를 입력해 주세요.' }, 400);
   }
+  if (currentPrice === undefined || isNaN(Number(currentPrice)) || Number(currentPrice) <= 0) {
+    return c.json({ error: '올바른 현재가를 입력해 주세요.' }, 400);
+  }
+  if (ma20 === undefined || isNaN(Number(ma20)) || Number(ma20) <= 0) {
+    return c.json({ error: '올바른 20일 이동평균선 값을 입력해 주세요.' }, 400);
+  }
+  if (ma60 === undefined || isNaN(Number(ma60)) || Number(ma60) <= 0) {
+    return c.json({ error: '올바른 60일 이동평균선 값을 입력해 주세요.' }, 400);
+  }
 
   try {
+    const numCurrentPrice = Number(currentPrice);
+    const numMa20 = Number(ma20);
+    const numMa60 = Number(ma60);
+
+    const score1 = ((numCurrentPrice - numMa20) / numMa20) * 100;
+    const score2 = ((numMa20 - numMa60) / numMa60) * 100;
+
+    let trendScore = 0;
+    let regimeSignal = '하락 국면 ⚠️';
+
+    if (score1 > 0 && score2 > 0) {
+      regimeSignal = '상승 국면 🔥';
+      trendScore = 100;
+    } else if (score1 > 0 && score2 <= 0) {
+      regimeSignal = '단기 반등/횡보 ⏳';
+      trendScore = 60;
+    } else if (score1 <= 0 && score2 > 0) {
+      regimeSignal = '단기 눌림목/조정 📉';
+      trendScore = 40;
+    } else {
+      regimeSignal = '하락 국면 ⚠️';
+      trendScore = 0;
+    }
+
     await db.insert(schema.calculatorHistory).values({
       userId,
       ticker: ticker.trim().toUpperCase(),
@@ -867,6 +900,11 @@ authApp.post('/calculator/history', async (c) => {
       riskReward: Number(riskReward ?? 2.0),
       recStop: Number(recStop),
       recTarget: Number(recTarget),
+      currentPrice: numCurrentPrice,
+      ma20: numMa20,
+      ma60: numMa60,
+      trendScore,
+      regimeSignal,
     });
 
     return c.json({ success: true, message: '전략 계산 히스토리가 저장되었습니다.' });
@@ -881,7 +919,7 @@ authApp.put('/calculator/history/:id', async (c) => {
   const id = parseInt(c.req.param('id'));
   const body = await c.req.json();
 
-  const { ticker, period, basePrice, highPrice, lowPrice, riskReward, recStop, recTarget } = body;
+  const { ticker, period, basePrice, highPrice, lowPrice, riskReward, recStop, recTarget, currentPrice, ma20, ma60 } = body;
 
   try {
     // Verify ownership
@@ -892,6 +930,30 @@ authApp.put('/calculator/history/:id', async (c) => {
 
     if (!existing) {
       return c.json({ error: '수정하려는 항목을 찾을 수 없거나 권한이 없습니다.' }, 404);
+    }
+
+    const updatedCurrentPrice = currentPrice !== undefined ? Number(currentPrice) : existing.currentPrice;
+    const updatedMa20 = ma20 !== undefined ? Number(ma20) : existing.ma20;
+    const updatedMa60 = ma60 !== undefined ? Number(ma60) : existing.ma60;
+
+    const score1 = ((updatedCurrentPrice - updatedMa20) / updatedMa20) * 100;
+    const score2 = ((updatedMa20 - updatedMa60) / updatedMa60) * 100;
+
+    let trendScore = 0;
+    let regimeSignal = '하락 국면 ⚠️';
+
+    if (score1 > 0 && score2 > 0) {
+      regimeSignal = '상승 국면 🔥';
+      trendScore = 100;
+    } else if (score1 > 0 && score2 <= 0) {
+      regimeSignal = '단기 반등/횡보 ⏳';
+      trendScore = 60;
+    } else if (score1 <= 0 && score2 > 0) {
+      regimeSignal = '단기 눌림목/조정 📉';
+      trendScore = 40;
+    } else {
+      regimeSignal = '하락 국면 ⚠️';
+      trendScore = 0;
     }
 
     await db
@@ -905,6 +967,11 @@ authApp.put('/calculator/history/:id', async (c) => {
         riskReward: riskReward !== undefined ? Number(riskReward) : existing.riskReward,
         recStop: recStop !== undefined ? Number(recStop) : existing.recStop,
         recTarget: recTarget !== undefined ? Number(recTarget) : existing.recTarget,
+        currentPrice: updatedCurrentPrice,
+        ma20: updatedMa20,
+        ma60: updatedMa60,
+        trendScore,
+        regimeSignal,
       })
       .where(eq(schema.calculatorHistory.id, id));
 
