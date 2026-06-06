@@ -3049,10 +3049,37 @@ export default function App() {
                     <input
                       type="text"
                       value={calcTicker}
-                      onChange={(e) => setCalcTicker(e.target.value.toUpperCase())}
+                      onChange={(e) => {
+                        const uppercased = e.target.value.toUpperCase();
+                        setCalcTicker(uppercased);
+                        const matched = portfolio.find(p => p.ticker.toUpperCase() === uppercased);
+                        if (matched) {
+                          setCalcBasePrice(matched.buyPrice.toString());
+                          setCalcCurrentPrice(matched.currentPrice.toString());
+                        }
+                      }}
                       placeholder="예: AAPL, SEC"
                       className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 focus:outline-none focus:border-indigo-500 transition-colors font-semibold"
                     />
+                    {portfolio.length > 0 && (
+                      <div className="mt-2 flex flex-wrap gap-1 items-center">
+                        <span className="text-[10px] text-slate-400 mr-1">보유 종목 불러오기:</span>
+                        {portfolio.map((p) => (
+                          <button
+                            key={p.id}
+                            type="button"
+                            onClick={() => {
+                              setCalcTicker(p.ticker);
+                              setCalcBasePrice(p.buyPrice.toString());
+                              setCalcCurrentPrice(p.currentPrice.toString());
+                            }}
+                            className="text-[9px] bg-indigo-500/10 dark:bg-indigo-500/5 hover:bg-indigo-500 hover:text-white dark:hover:bg-indigo-500 dark:hover:text-white text-indigo-600 dark:text-indigo-400 font-bold px-1.5 py-0.5 rounded-lg border border-indigo-500/20 transition-all cursor-pointer"
+                          >
+                            {p.ticker}
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
 
                   {/* 1. Period Selection */}
