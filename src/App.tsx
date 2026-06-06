@@ -3052,10 +3052,19 @@ export default function App() {
                       onChange={(e) => {
                         const uppercased = e.target.value.toUpperCase();
                         setCalcTicker(uppercased);
+                        
+                        // 1. Portfolio autofill (Base price, Current price)
                         const matched = portfolio.find(p => p.ticker.toUpperCase() === uppercased);
                         if (matched) {
                           setCalcBasePrice(matched.buyPrice.toString());
                           setCalcCurrentPrice(matched.currentPrice.toString());
+                        }
+                        
+                        // 2. Calculator History autofill (MA20, MA60)
+                        const latestHist = calcHistory.find(h => h.ticker.toUpperCase() === uppercased);
+                        if (latestHist) {
+                          setCalcMa20(latestHist.ma20.toString());
+                          setCalcMa60(latestHist.ma60.toString());
                         }
                       }}
                       placeholder="예: AAPL, SEC"
@@ -3072,6 +3081,16 @@ export default function App() {
                               setCalcTicker(p.ticker);
                               setCalcBasePrice(p.buyPrice.toString());
                               setCalcCurrentPrice(p.currentPrice.toString());
+                              
+                              // Autofill MA20 and MA60 from latest history if exists
+                              const latestHist = calcHistory.find(h => h.ticker.toUpperCase() === p.ticker.toUpperCase());
+                              if (latestHist) {
+                                setCalcMa20(latestHist.ma20.toString());
+                                setCalcMa60(latestHist.ma60.toString());
+                              } else {
+                                setCalcMa20('');
+                                setCalcMa60('');
+                              }
                             }}
                             className="text-[9px] bg-indigo-500/10 dark:bg-indigo-500/5 hover:bg-indigo-500 hover:text-white dark:hover:bg-indigo-500 dark:hover:text-white text-indigo-600 dark:text-indigo-400 font-bold px-1.5 py-0.5 rounded-lg border border-indigo-500/20 transition-all cursor-pointer"
                           >
