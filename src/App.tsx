@@ -514,11 +514,11 @@ export default function App() {
       return;
     }
     if (!calcMa20 || parseFloat(calcMa20) <= 0) {
-      alert('올바른 20일 이동평균선 값을 입력해 주세요.');
+      alert('올바른 20일/주/월 이동평균선(MA20) 값을 입력해 주세요.');
       return;
     }
     if (!calcMa60 || parseFloat(calcMa60) <= 0) {
-      alert('올바른 60일 이동평균선 값을 입력해 주세요.');
+      alert('올바른 60일/주/월 이동평균선(MA60) 값을 입력해 주세요.');
       return;
     }
 
@@ -613,11 +613,11 @@ export default function App() {
       return;
     }
     if (isNaN(targetMa20) || targetMa20 <= 0) {
-      alert('올바른 20일 이동평균선 값을 입력해 주세요.');
+      alert('올바른 20일/주/월 이동평균선(MA20) 값을 입력해 주세요.');
       return;
     }
     if (isNaN(targetMa60) || targetMa60 <= 0) {
-      alert('올바른 60일 이동평균선 값을 입력해 주세요.');
+      alert('올바른 60일/주/월 이동평균선(MA60) 값을 입력해 주세요.');
       return;
     }
 
@@ -2206,6 +2206,7 @@ export default function App() {
                       <th className="py-4 px-6 text-center">전략 (트리거/스톱)</th>
                       <th className="py-4 px-6 text-right text-rose-500">익절/손절가</th>
                       <th className="py-4 px-6 text-right text-indigo-500">차기 목표가</th>
+                      <th className="py-4 px-6 text-center">현재 위치 게이지</th>
                       <th className="py-4 px-6">메모</th>
                     </tr>
                   </thead>
@@ -2374,6 +2375,43 @@ export default function App() {
                             {formatCurrency(item.nextTarget, item.currency)}
                           </td>
 
+                          {/* 현재 위치 게이지 */}
+                          <td className="py-4 px-6">
+                            {(() => {
+                              const stopVal = item.stopLoss;
+                              const targetVal = item.nextTarget;
+                              const currentVal = item.currentPrice;
+
+                              let positionPercent = 0;
+                              if (targetVal > stopVal) {
+                                positionPercent = ((currentVal - stopVal) / (targetVal - stopVal)) * 100;
+                                positionPercent = Math.max(0, Math.min(100, positionPercent));
+                              }
+
+                              return (
+                                <div className="flex flex-col gap-1 w-full min-w-[150px] max-w-[200px] text-[10px] mx-auto">
+                                  <div className="relative w-full bg-slate-200 dark:bg-slate-800/80 h-3 rounded-full border border-slate-350/20 dark:border-slate-700/20 overflow-hidden flex items-center p-0.5">
+                                    <div 
+                                      className={`h-full rounded-full transition-all duration-300 ${
+                                        currentVal <= stopVal 
+                                          ? 'bg-rose-500' 
+                                          : currentVal >= targetVal 
+                                          ? 'bg-indigo-500' 
+                                          : 'bg-gradient-to-r from-rose-500 via-amber-450 to-indigo-500 dark:from-rose-500/85 dark:via-amber-500/85 dark:to-indigo-500/85'
+                                      }`}
+                                      style={{ width: `${positionPercent}%` }}
+                                    />
+                                  </div>
+                                  <div className="flex justify-between items-center text-[9px] font-bold mt-0.5 px-0.5 whitespace-nowrap">
+                                    <span className="text-rose-500">스톱 {formatCurrency(stopVal, item.currency)}</span>
+                                    <span className="text-slate-500 dark:text-slate-400 font-mono">{positionPercent.toFixed(0)}%</span>
+                                    <span className="text-indigo-500 dark:text-indigo-400">목표 {formatCurrency(targetVal, item.currency)}</span>
+                                  </div>
+                                </div>
+                              );
+                            })()}
+                          </td>
+
                           <td className="py-4 px-6 text-slate-400 max-w-xs truncate" title={item.memo || ''}>
                             {item.memo || '-'}
                           </td>
@@ -2381,7 +2419,7 @@ export default function App() {
                       ))
                     ) : (
                       <tr>
-                        <td colSpan={10} className="py-12 px-6 text-center text-slate-400">
+                        <td colSpan={12} className="py-12 px-6 text-center text-slate-400">
                           보유하고 있는 주식 자산이 없습니다. [매매 거래 일지] 탭에서 매수(BUY) 기록을 등록해 주세요.
                         </td>
                       </tr>
@@ -2445,6 +2483,42 @@ export default function App() {
                           <div className="font-mono font-extrabold text-indigo-600 dark:text-indigo-400">{formatCurrency(item.nextTarget, item.currency)}</div>
                         </div>
                       </div>
+
+                      {/* Mobile progress bar gauge */}
+                      {(() => {
+                        const stopVal = item.stopLoss;
+                        const targetVal = item.nextTarget;
+                        const currentVal = item.currentPrice;
+
+                        let positionPercent = 0;
+                        if (targetVal > stopVal) {
+                          positionPercent = ((currentVal - stopVal) / (targetVal - stopVal)) * 100;
+                          positionPercent = Math.max(0, Math.min(100, positionPercent));
+                        }
+
+                        return (
+                          <div className="flex flex-col gap-1 w-full text-[10px] bg-slate-100/30 dark:bg-slate-900/25 p-3 rounded-2xl border border-slate-200/30 dark:border-slate-800/40">
+                            <span className="text-[9px] text-slate-500 font-bold mb-1">스톱선 대비 현재가 위치 게이지</span>
+                            <div className="relative w-full bg-slate-250 dark:bg-slate-850 h-3 rounded-full overflow-hidden flex items-center border border-slate-350/20 dark:border-slate-755/20">
+                              <div 
+                                className={`h-full rounded-full transition-all duration-300 ${
+                                  currentVal <= stopVal 
+                                    ? 'bg-rose-500' 
+                                    : currentVal >= targetVal 
+                                    ? 'bg-indigo-500' 
+                                    : 'bg-gradient-to-r from-rose-500 via-amber-450 to-indigo-500 dark:from-rose-500/80 dark:via-amber-500/80 dark:to-indigo-500/80'
+                                }`}
+                                style={{ width: `${positionPercent}%` }}
+                              />
+                            </div>
+                            <div className="flex justify-between items-center text-[9px] font-bold mt-1">
+                              <span className="text-rose-500">스톱 {formatCurrency(stopVal, item.currency)}</span>
+                              <span className="text-slate-650 dark:text-slate-350 font-mono">{positionPercent.toFixed(0)}%</span>
+                              <span className="text-indigo-500 dark:text-indigo-400">목표 {formatCurrency(targetVal, item.currency)}</span>
+                            </div>
+                          </div>
+                        );
+                      })()}
 
                       {/* Stop Loss Alert and Current Price / Settings editors */}
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-3 border-t border-slate-200/40 dark:border-slate-800/40">
@@ -3195,7 +3269,7 @@ export default function App() {
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-xs font-bold text-slate-400 mb-1">20일 이평선 (MA20) *</label>
+                      <label className="block text-xs font-bold text-slate-400 mb-1">20일/주/월 이평선 (MA20) *</label>
                       <input
                         type="number"
                         value={calcMa20}
@@ -3205,7 +3279,7 @@ export default function App() {
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-bold text-slate-400 mb-1">60일 이평선 (MA60) *</label>
+                      <label className="block text-xs font-bold text-slate-400 mb-1">60일/주/월 이평선 (MA60) *</label>
                       <input
                         type="number"
                         value={calcMa60}
@@ -3370,7 +3444,7 @@ export default function App() {
                           <div className="mt-5 pt-4 border-t border-slate-200/50 dark:border-slate-800/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/50 dark:bg-slate-900/35 p-3 rounded-2xl">
                             <div className="space-y-0.5">
                               <span className="text-xs text-slate-700 dark:text-slate-300 font-extrabold block">실시간 시장 국면 판정</span>
-                              <span className="text-[10px] text-slate-400">현재가와 20일/60일 이평선의 이격 및 배열도 기준</span>
+                              <span className="text-[10px] text-slate-400">현재가와 20선/60선 이평선의 이격 및 배열도 기준</span>
                             </div>
                             <div>
                               {getRegimeBadge(regimeLabel, trendScoreVal)}
@@ -3507,7 +3581,7 @@ export default function App() {
                         <th className="py-3 px-4">종목</th>
                         <th className="py-3 px-4">분석 기간</th>
                         <th className="py-3 px-4">계산 일시</th>
-                        <th className="py-3 px-4">현재가 / 이평선(20/60)</th>
+                        <th className="py-3 px-4">현재가 / 이평선(20선/60선)</th>
                         <th className="py-3 px-4">시장 국면 (점수)</th>
                         <th className="py-3 px-4">기준 진입가</th>
                         <th className="py-3 px-4">최고가 / 최저가</th>
@@ -3578,7 +3652,7 @@ export default function App() {
                               <td className="py-3 px-4 text-slate-400 font-mono text-[11px] whitespace-nowrap">
                                 {formatCalcDate(item.createdAt)}
                               </td>
-                              {/* 현재가 / 이평선(20/60) */}
+                              {/* 현재가 / 이평선(20선/60선) */}
                               <td className="py-3 px-4">
                                 <div className="flex flex-col gap-1 w-28">
                                   <input
@@ -3680,7 +3754,7 @@ export default function App() {
                             <td className="py-4 px-4 text-slate-400 font-mono text-[11px] whitespace-nowrap">
                               {formatCalcDate(item.createdAt)}
                             </td>
-                            {/* 현재가 / 이평선(20/60) */}
+                            {/* 현재가 / 이평선(20선/60선) */}
                             <td className="py-4 px-4 font-mono text-slate-500 dark:text-slate-400">
                               <div className="font-bold text-slate-700 dark:text-slate-300">{item.currentPrice.toLocaleString()}</div>
                               <div className="text-[10px] text-slate-450 dark:text-slate-400">
@@ -3846,7 +3920,7 @@ export default function App() {
                               />
                             </div>
                             <div>
-                              <label className="block text-[10px] text-slate-400 font-bold mb-1">20일 이평선 *</label>
+                              <label className="block text-[10px] text-slate-400 font-bold mb-1">20일/주/월 이평선 (MA20) *</label>
                               <input
                                 type="number"
                                 value={editCalcMa20}
@@ -3855,7 +3929,7 @@ export default function App() {
                               />
                             </div>
                             <div className="col-span-2">
-                              <label className="block text-[10px] text-slate-400 font-bold mb-1">60일 이평선 *</label>
+                              <label className="block text-[10px] text-slate-400 font-bold mb-1">60일/주/월 이평선 (MA60) *</label>
                               <input
                                 type="number"
                                 value={editCalcMa60}
@@ -3950,11 +4024,11 @@ export default function App() {
                             <span className="font-mono text-xs font-semibold text-slate-700 dark:text-slate-300">{item.currentPrice.toLocaleString()}</span>
                           </div>
                           <div className="space-y-0.5 border-x border-slate-100/85 dark:border-slate-800/50 px-1">
-                            <span className="block text-[8px] text-slate-400 font-bold tracking-wider">20일 이평선</span>
+                            <span className="block text-[8px] text-slate-400 font-bold tracking-wider">MA20</span>
                             <span className="font-mono text-xs font-semibold text-slate-600 dark:text-slate-400">{item.ma20.toLocaleString()}</span>
                           </div>
                           <div className="space-y-0.5">
-                            <span className="block text-[8px] text-slate-400 font-bold tracking-wider">60일 이평선</span>
+                            <span className="block text-[8px] text-slate-400 font-bold tracking-wider">MA60</span>
                             <span className="font-mono text-xs font-semibold text-slate-600 dark:text-slate-400">{item.ma60.toLocaleString()}</span>
                           </div>
                         </div>

@@ -859,10 +859,10 @@ authApp.post('/calculator/history', async (c) => {
     return c.json({ error: '올바른 현재가를 입력해 주세요.' }, 400);
   }
   if (ma20 === undefined || isNaN(Number(ma20)) || Number(ma20) <= 0) {
-    return c.json({ error: '올바른 20일 이동평균선 값을 입력해 주세요.' }, 400);
+    return c.json({ error: '올바른 20일/주/월 이동평균선(MA20) 값을 입력해 주세요.' }, 400);
   }
   if (ma60 === undefined || isNaN(Number(ma60)) || Number(ma60) <= 0) {
-    return c.json({ error: '올바른 60일 이동평균선 값을 입력해 주세요.' }, 400);
+    return c.json({ error: '올바른 60일/주/월 이동평균선(MA60) 값을 입력해 주세요.' }, 400);
   }
 
   try {
